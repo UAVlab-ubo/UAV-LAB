@@ -1,5 +1,5 @@
 
-# Guía paso a paso: Instalar y usar PX4 desde cero**
+# Guía paso a paso: Instalar y usar PX4 desde cero
 **Para:** Ignacio · principiante en firmware de drones 
 
 **Objetivo:** Llegar desde "nunca toqué PX4" hasta "estoy haciendo volar un dron real con firmware compilado por mí"
