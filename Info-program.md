@@ -1,4 +1,4 @@
-
+> 12-06-2026
 
 # MAVlink
 **MAVLink es un protocolo ligero de mensajería diseñado para la comunicación entre drones y estaciones de control en tierra. Es eficiente, confiable y ampliamente usado en sistemas de vehículos aéreos no tripulados (UAV), permitiendo transmitir telemetría, comandos y datos entre múltiples dispositivos.**  
