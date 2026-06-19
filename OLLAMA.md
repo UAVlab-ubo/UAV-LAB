@@ -1,4 +1,5 @@
-# Ollama
+> 08-05-2026
+# Instalar Ollama
 
 Para poder instalar Ollama desde la Powershell se necesita este comando:
 ```c
