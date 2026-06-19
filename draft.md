@@ -317,6 +317,8 @@ make px4_sitl gazebo
 <br>
 
 # Px4
+**PX4 Autopilot es un sistema de software de código abierto y hardware libre diseñado para controlar de manera autónoma vehículos no tripulados, principalmente drones (multirrotores, ala fija, VTOL). 
+Sirve como el "cerebro" del dron, gestionando la estabilidad, navegación, telemetría y ejecución de misiones programadas o automáticas.**
 
 <br>
 
