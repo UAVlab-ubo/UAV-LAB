@@ -1,3 +1,4 @@
+> 19-06-2026
 
 # Instalación de WSL2 y Ubuntu - ROS2 - Gazebo - PX4 SITL - QGC
 
@@ -16,7 +17,7 @@
 
 ---
 
-## Índice rápido
+# Índice rápido
 1. Preparar WSL2 y Ubuntu 22.04  
 2. Limpieza segura (si hay restos)  
 3. Instalar ROS 2 Humble  
