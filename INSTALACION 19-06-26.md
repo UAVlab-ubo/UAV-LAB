@@ -1,5 +1,5 @@
 
-# Instalación
+# Instalación de WSL2 - ROS2 - Gazebo - PX4 SITL - QGC
 
 **Objetivo:** instalar y dejar operativo en **Windows 11 + WSL2 (Ubuntu 22.04 jammy)** el stack reproducible:
 
