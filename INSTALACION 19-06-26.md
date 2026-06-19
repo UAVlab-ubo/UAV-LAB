@@ -30,7 +30,7 @@
 
 ---
 
-## 1 Preparar WSL2 y Ubuntu 22.04
+# 1. Preparar WSL2 y Ubuntu 22.04
 
 ### En PowerShell (Windows) — ejecutar como Administrador
 ```powershell
@@ -67,7 +67,7 @@ lsb_release -cs   # debe imprimir: jammy
 
 ---
 
-## 2 Limpieza segura (si hay instalaciones previas)
+# 2. Limpieza segura (si hay instalaciones previas)
 
 > Ejecuta solo lo que necesites; revisa salidas antes de borrar rutas fuera de tu home.
 
@@ -93,7 +93,7 @@ sudo rm -rf /usr/local/lib/libpx4* /usr/local/include/px4* /usr/local/share/px4*
 
 ---
 
-## 3 Instalar ROS 2 Humble (Ubuntu 22.04)
+# 3. Instalar ROS 2 Humble (Ubuntu 22.04)
 
 ### Añadir repositorio y claves, instalar
 ```bash
@@ -134,7 +134,7 @@ ls /opt/ros/humble # debe listar carpetas de instalación
 
 ---
 
-## 4 Instalar Ignition Gazebo Fortress 6.18.0 (gz-fortress)
+# 4. Instalar Ignition Gazebo Fortress 6.18.0 (gz-fortress)
 
 ### Añadir repositorio OSRF e instalar gz-fortress
 ```bash
@@ -179,7 +179,7 @@ ign gazebo -v 4
 
 ---
 
-## 5 Clonar y compilar PX4 SITL v1.15.0
+# 5. Clonar y compilar PX4 SITL v1.15.0
 
 ### Clonar y fijar tag
 ```bash
@@ -235,7 +235,7 @@ ign gazebo -v 4 Tools/simulation/ignition/worlds/empty.sdf
 
 ---
 
-## 6 Ajustes de entorno y WSLg
+# 6. Ajustes de entorno y WSLg
 
 ### Variables de recursos (temporal o persistente)
 ```bash
@@ -260,7 +260,7 @@ sudo chmod 700 /mnt/wslg/runtime-dir
 
 ---
 
-## 7 QGroundControl y MAVLink
+# 7. QGroundControl y MAVLink
 
 ### Opción A — AppImage en WSL (rápida, para pruebas)
 ```bash
@@ -297,7 +297,7 @@ En QGroundControl añade una conexión UDP con **Host** `localhost` o la IP de W
 
 ---
 
-## 8 Diagnóstico y recuperación rápida
+# 8. Diagnóstico y recuperación rápida
 
 ### Comprobaciones útiles
 ```bash
@@ -339,7 +339,7 @@ sudo rm -rf /usr/local/lib/libpx4* /usr/local/include/px4* /usr/local/share/px4*
 
 ---
 
-## 9 Script de instalación automatizada (opcional)
+# 9. Script de instalación automatizada (opcional)
 
 Guarda como `~/setup_px4_v1.15.sh`, revisa y ejecuta **solo si confías** en el script:
 
@@ -387,7 +387,7 @@ chmod +x ~/setup_px4_v1.15.sh
 
 ---
 
-## 10 Buenas prácticas y recomendaciones finales
+# 10. Buenas prácticas y recomendaciones finales
 
 - **Siempre** trabajar en `~` dentro de WSL2.  
 - **No** mezclar carpetas montadas de Windows para compilar.  
@@ -398,5 +398,3 @@ chmod +x ~/setup_px4_v1.15.sh
 - **Si algo falla**, borra y re-clona en lugar de intentar arreglar una copia contaminada.
 
 ---
-
-Si quieres, **convierto esto en un archivo `INSTALL_PX4_WSL2.md`** listo para descargar o te genero el **script PowerShell** que instala WSL2 y abre los puertos de firewall en Windows. ¿Cuál prefieres ahora?
