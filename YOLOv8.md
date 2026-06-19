@@ -1,4 +1,6 @@
-# Documentar sobre YOLOv8 (se pide en el Roadmap)
+> 05-06-2026
+
+# YOLOv8
 
 YOLO (You Only Look Once) sirve principalmente para detectar objetos en imágenes y videos en tiempo real. A diferencia de otros sistemas que analizan una imagen por partes, YOLO la procesa completa de un solo golpe, lo que lo hace extremadamente rápido y eficiente.
 ## Funciones principales
