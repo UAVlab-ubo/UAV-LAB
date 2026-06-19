@@ -1,3 +1,5 @@
+> 05-06-2026
+
 # Cómo usar dron DJI Avata 2 para principiantes
 Usar el DJI Avata 2 es muy intuitivo gracias al DJI RC Motion 3. 
 Para empezar: despliega el dron, carga las baterías, enciende el control y las gafas, conéctalos a la app DJI Fly para activarlos, y despega desde el suelo o la mano presionando dos veces el botón naranja.
