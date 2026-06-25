@@ -1,4 +1,4 @@
-
+> 07-05-2026
 # Guía paso a paso: Instalar y usar PX4 desde cero
 **Para:** Ignacio · principiante en firmware de drones 
 
