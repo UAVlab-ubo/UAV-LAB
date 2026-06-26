@@ -110,3 +110,242 @@ ls -l runs/detect/predict
 
 ---
 
+
+
+---
+
+# 📄 **Instalación Correcta de ROS 2 Humble en WSL2 + Validación con `ros2 topic list`**
+
+Este documento describe el proceso completo para:
+
+- Instalar ROS 2 Humble correctamente en WSL2 (Ubuntu 22.04)  
+- Reparar problemas comunes del daemon de ROS 2  
+- Validar la instalación con `ros2 topic list`  
+- Continuar con la configuración posterior a ROS 2  
+
+---
+
+# 1. Requisitos previos
+
+Antes de instalar ROS 2 Humble, asegúrate de:
+
+- Usar **WSL2** (no WSL1)
+- Tener **Ubuntu 22.04**
+- No ejecutar ROS2 desde rutas de Windows (`/mnt/c/...`)
+- No tener **Conda** activado (rompe ROS2)
+
+Verificar ubicación:
+
+```bash
+pwd
+```
+
+Debe mostrar:
+
+```
+/home/tu_usuario
+```
+
+---
+
+# 2. Desactivar Conda (si está activo)
+
+```bash
+conda deactivate 2>/dev/null || true
+conda config --set auto_activate_base false
+```
+
+Cerrar y abrir la terminal.
+
+---
+
+# 3. Eliminar instalaciones previas de ROS 2 (si existían)
+
+```bash
+sudo apt purge -y ros-humble-*
+sudo apt autoremove -y
+sudo rm -rf /opt/ros/humble
+sudo rm -rf ~/.ros
+sudo rm -rf ~/.colcon
+```
+
+---
+
+# 4. Agregar el repositorio oficial de ROS 2 Humble
+
+```bash
+sudo apt update
+sudo apt install -y curl gnupg2 lsb-release software-properties-common
+
+sudo mkdir -p /etc/apt/keyrings
+
+curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-archive-keyring.gpg] \
+  http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+```
+
+Actualizar:
+
+```bash
+sudo apt update
+```
+
+Si aparece:
+
+```
+Get:6 http://packages.ros.org/ros2/ubuntu jammy InRelease
+```
+
+→ El repositorio está bien agregado.
+
+---
+
+# 5. Instalar ROS 2 Humble Desktop
+
+```bash
+sudo apt install -y ros-humble-desktop python3-rosdep
+```
+
+Inicializar rosdep:
+
+```bash
+sudo rosdep init || true
+rosdep update
+```
+
+---
+
+# 6. Activar ROS 2 automáticamente
+
+```bash
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+---
+
+# 7. Reparar el daemon de ROS 2 (si fallaba)
+
+Si `ros2 topic list` daba timeout, borrar el daemon:
+
+```bash
+rm -rf ~/.ros/daemon
+```
+
+---
+
+# 8. Reparar DNS en WSL2 (si pip o rosdep fallaban)
+
+Crear resolv.conf:
+
+```bash
+sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+sudo bash -c 'echo "nameserver 1.1.1.1" >> /etc/resolv.conf'
+```
+
+Evitar que WSL lo reemplace:
+
+```bash
+sudo bash -c 'echo "[network]" > /etc/wsl.conf'
+sudo bash -c 'echo "generateResolvConf = false" >> /etc/wsl.conf'
+```
+
+Reiniciar WSL2 desde Windows PowerShell:
+
+```powershell
+wsl --shutdown
+```
+
+---
+
+# 9. Validar la instalación de ROS 2
+
+Asegúrate de estar en tu HOME:
+
+```bash
+cd ~
+```
+
+Ejecuta:
+
+```bash
+ros2 topic list
+```
+
+La salida correcta debe ser:
+
+```
+/parameter_events
+/rosout
+```
+
+Esto confirma que:
+
+- ROS2 está instalado correctamente  
+- El daemon funciona  
+- Python no está interferido  
+- No hay conflictos con rutas de Windows  
+- No hay conflictos con Conda  
+
+---
+
+# 10. ¿Qué sigue después de tener ROS 2 funcionando?
+
+Una vez que `ros2 topic list` funciona, ya puedes continuar con:
+
+### ✔️ Crear tu workspace de ROS 2
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+```
+
+### ✔️ Instalar paquetes adicionales de ROS 2
+Ejemplo:
+
+```bash
+sudo apt install ros-humble-cv-bridge ros-humble-vision-opencv
+```
+
+### ✔️ Crear tus propios nodos en Python o C++
+Ejemplo de nodo Python:
+
+```bash
+ros2 pkg create --build-type ament_python mi_paquete
+```
+
+### ✔️ Integrar ROS 2 con otras herramientas
+- Gazebo (simulación)
+- PX4 (autopiloto)
+- MAVSDK (control de drones)
+- YOLOv8 (visión artificial)
+- QGroundControl (estación de control)
+
+### ✔️ Crear launch files
+```bash
+ros2 launch mi_paquete mi_launch.py
+```
+
+### ✔️ Usar colcon para compilar paquetes
+```bash
+colcon build --symlink-install
+```
+
+---
+
+# 11. Resumen
+
+Este documento cubre:
+
+- Instalación limpia de ROS 2 Humble en WSL2  
+- Reparación del daemon y DNS  
+- Validación con `ros2 topic list`  
+- Pasos siguientes para continuar con tu entorno de desarrollo  
+
+Con esto, tu entorno ROS 2 queda **estable, funcional y listo para integrarse con simulación, visión y control de drones**.
+
+---
