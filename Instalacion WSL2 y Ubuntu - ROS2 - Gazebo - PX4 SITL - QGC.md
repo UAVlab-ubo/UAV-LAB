@@ -221,6 +221,23 @@ make px4_sitl -j$(nproc)
 make px4_sitl gz_x500 -j$(nproc)
 ```
 
+### Lanzar PX4 SITL con Ignition
+Desde la raíz de PX4 ejecuta (GUI):
+
+```bash
+cd ~/PX4-Autopilot
+make px4_sitl ignition
+```
+Headless (sin GUI):
+```bash
+HEADLESS=1 make px4_sitl ignition
+```
+Más verbosidad:
+```bash
+VERBOSE_SIM=1 make px4_sitl ignition
+```
+
+
 ### Lanzar mundo Ignition incluido (ejemplo)
 ```bash
 # Listar mundos
@@ -230,6 +247,10 @@ ls Tools/simulation/ignition/worlds
 ign gazebo -v 4 Tools/simulation/ignition/worlds/empty.sdf
 ```
 
+
+bash
+VERBOSE_SIM=1 make px4_sitl ignition
+El make compila y arranca PX4 y el simulador juntos; QGroundControl suele conectarse automáticamente. 
 **Puntos críticos**
 - **No** instales `genmsg` ni `genpy` para v1.15.  
 - Si ves referencias a utilidades de versiones más nuevas, borra y re-clona el repo.
