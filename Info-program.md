@@ -376,3 +376,6 @@ Sirve como el "cerebro" del dron, gestionando la estabilidad, navegación, telem
 ---
 
 
+# Pixhawk 6c
+
+
