@@ -121,19 +121,11 @@ Ejemplo de archivo `.plan` (JSON simplificado):
 
 ---
 
-
-
-
-
-# Enlace SiK 915 MHz
-
-Enlace SiK 915 MHz para Drones
+# Enlace SiK 915 MHz para Drones
 
 ## 1. Introducción
 
 El enlace **SiK 915 MHz** es uno de los sistemas de telemetría más utilizados en drones basados en PX4, ArduPilot y otros autopilotos compatibles con **MAVLink**. Su función principal es proporcionar un canal de comunicación bidireccional entre el dron y la estación terrestre, permitiendo enviar comandos, recibir datos de vuelo y monitorear el estado del vehículo en tiempo real.
-
-Este documento explica su funcionamiento, características, configuración, recomendaciones y buenas prácticas.
 
 ## 2. ¿Qué es un enlace SiK?
 
@@ -257,8 +249,4 @@ Valores típicos
 - Telemetría por **WiFi.**
 - Telemetría por **4G/LTE.**
 
-## 12. Conclusión
-
-El enlace **SiK 915 MHz** es una solución confiable, económica y ampliamente compatible para telemetría MAVLink en drones. Su facilidad de uso, robustez y disponibilidad lo convierten en una excelente opción para proyectos personales, investigación y operaciones de corto a mediano alcance.
-
-Para vuelos reales, se recomienda validar la configuración, revisar la regulación local y realizar pruebas de campo progresivas.
+> Para vuelos reales, se recomienda validar la configuración, revisar la regulación local y realizar pruebas de campo progresivas.
