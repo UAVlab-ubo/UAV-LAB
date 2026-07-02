@@ -253,7 +253,7 @@ En QGC:
 
 # 18. Diagnóstico por grupos de parámetros en QGroundControl
 
-Esta sección permite diagnosticar fallas del dron **solo usando QGC**, sin tocar código fuente.
+Esta sección permite diagnosticar fallas del dron **solo usando QGroundControl**, sin tocar código fuente.
 
 ---
 
@@ -368,8 +368,6 @@ Parámetros clave:
 ---
 
 # 19. Tabla de diagnóstico operativo (síntoma → grupo → qué revisar)
-
-Esta es la tabla que te pidieron explícitamente.
 
 ---
 
