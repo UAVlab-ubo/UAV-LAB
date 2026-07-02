@@ -1,333 +1,445 @@
 > 07-05-2026
-# Guía paso a paso: Instalar y usar PX4 desde cero
-**Para:** Ignacio · principiante en firmware de drones 
 
-**Objetivo:** Llegar desde "nunca toqué PX4" hasta "estoy haciendo volar un dron real con firmware compilado por mí"
-# 
-### Antes de arrancar — qué te hace falta
-- **Una PC:** idealmente con 8 GB de RAM o más (16 GB es cómodo) y 30 GB libres en disco. PX4 + simulador + herramientas ocupan bastante.
-- **Conexión a internet** estable (vas a bajar varios GB la primera vez).
-- **Tiempo:** la primera instalación completa toma entre 2 y 4 horas si no aparecen errores.
-- **Paciencia con la terminal:** vas a usar mucho la línea de comandos. En una semana ya te resulta natural.
-# 
-### PASO 1 — Tener Linux funcionando
-**Qué es Linux.** Sistema operativo libre y open source, alternativa a Windows o macOS. Está hecho de un núcleo (kernel) más herramientas alrededor. Existen "distribuciones" (paquetes listos para usar). La más popular para desarrollo es Ubuntu.
+---
 
-**Qué es Ubuntu.** Distribución de Linux mantenida por la empresa Canonical, gratuita, con interfaz gráfica amigable. Es el estándar de facto para desarrollo de drones — toda la documentación de PX4 asume Ubuntu.
+# Guía completa: Instalación, uso y diagnóstico de PX4 desde cero  
+**Para:** Ignacio — principiante en firmware de drones  
+**Objetivo:** Pasar desde “nunca toqué PX4” hasta “vuelo un dron real con firmware compilado por mí y sé diagnosticarlo desde QGroundControl”.
 
-**Versión que necesitas:** Ubuntu 22.04 LTS (LTS = Long Term Support, soporte hasta 2027).
+---
 
-**Por qué Linux y no Windows.** Puedes desarrollar PX4 en Windows con WSL2, pero el 95 % de los tutoriales, scripts y tooling están pensados para Linux nativo. Te ahorras horas de dolores de cabeza si usas Linux directo.
+## 0. Requisitos previos
 
-**Tres formas de instalarlo:**
+- PC con mínimo 8 GB de RAM (ideal 16 GB).  
+- 30 GB libres en disco.  
+- Conexión a internet estable.  
+- Tiempo estimado inicial: 2–4 horas.  
+- Disposición para usar terminal.
 
-1. **Dual boot** (recomendado para serio): instalas Ubuntu junto a Windows en la misma PC, eliges cuál arrancar al prender. Mejor rendimiento.
-2. **Máquina virtual** (VirtualBox, VMware): corre Ubuntu adentro de Windows. Más fácil pero la simulación con Gazebo va lenta.
-3. **WSL2** (Windows Subsystem for Linux): Ubuntu adentro de Windows sin reiniciar. Funciona, pero los gráficos del simulador requieren configuración extra.
-Para empezar, dual boot o WSL2.
-# 
-### PASO 2 — Familiarizarte con la terminal
-**Qué es la terminal.** Interfaz de texto donde escribes comandos en lugar de hacer clic. En Ubuntu se abre con `Ctrl + Alt + T`. Todo lo que sigue se hace ahí.
+---
 
-**Comandos básicos:**
-``` c
-bash
-pwd               # Mostrar en qué carpeta estás
-ls                # Listar archivos de la carpeta actual
-cd carpeta        # Entrar a una carpeta
-cd ..             # Volver una carpeta atrás
-mkdir nombre      # Crear carpeta
-sudo comando      # Ejecutar comando con permisos de admin
+## 1. Instalar Linux (Ubuntu 22.04 LTS)
+
+Ubuntu es la distribución estándar para PX4.  
+Opciones:
+
+1. Dual boot (recomendado).  
+2. Máquina virtual (más lento).  
+3. WSL2 (funciona, pero simulación gráfica requiere ajustes).
+
+---
+
+## 2. Familiarizarse con la terminal
+
+Abrir terminal: `Ctrl + Alt + T`.
+
+Comandos básicos:
+
+```bash
+pwd
+ls
+cd carpeta
+cd ..
+mkdir nombre
+sudo comando
 ```
-**`sudo`** significa "super user do". Te pide tu contraseña y ejecuta el comando con permisos de administrador. Lo vas a usar cuando instales paquetes del sistema.
-#
-### PASO 3 — Instalar Git
-**Qué es Git.** Sistema de control de versiones. Te permite descargar código de internet, llevar un historial de cambios, colaborar con otros. Lo tienes del trabajo previo en Notion. Si no está instalado:
-```c
-bash
+
+---
+
+## 3. Instalar Git
+
+```bash
 sudo apt update
 sudo apt install git -y
-```
-
-**Configurarlo la primera vez:**
-```c
-bash
 git config --global user.name "Ignacio"
 git config --global user.email "tu@email.com"
 ```
-# 
-### PASO 4 — Clonar el repositorio de PX4
-**Qué es clonar.** "Clonar" un repositorio es descargar todo el código fuente del proyecto desde GitHub a tu PC. Quedas con una copia local que podés modificar.
 
-**Comando:**
-```c
-bash
-cd ~                                    # Ir a tu carpeta home
+---
+
+## 4. Clonar PX4
+
+```bash
+cd ~
 git clone https://github.com/PX4/PX4-Autopilot.git --recursive
 ```
-**Qué hace `--recursive`.** PX4 usa "submódulos": son otros repositorios incluidos dentro del principal (NuttX, las librerías de control, MAVLink, etc.). Sin `--recursive`, no se descargan y nada compila. Si te olvidaste:
-```c
-bash
+
+Si faltan submódulos:
+
+```bash
 cd PX4-Autopilot
 git submodule update --init --recursive
 ```
-Esto puede tardar 5-15 minutos según tu conexión. Vas a ver pasar muchísimas líneas — es normal.
-# 
-### PASO 5 — Instalar todas las dependencias automáticamente
-**Qué son las dependencias.** Programas y librerías que PX4 necesita para compilar y correr: compiladores, simuladores, librerías de Python, herramientas de build, etc. Son MUCHAS. Por suerte los desarrolladores te dan un script que instala todo de un saque.
 
-**Comando:**
-```c
-bash
+---
+
+## 5. Instalar dependencias
+
+```bash
 cd ~/PX4-Autopilot
 bash ./Tools/setup/ubuntu.sh
 ```
-**Qué instala este script (cada cosa explicada):**
-- **Toolchain ARM (`gcc-arm-none-eabi`):** el compilador cruzado. Compila en tu PC (x86) pero produce código para ARM (los chips de los flight controllers). "Cross-compiler" porque arquitectura origen ≠ destino.
-- **CMake:** sistema que orquesta la compilación. PX4 tiene miles de archivos; CMake decide qué se compila, en qué orden y con qué flags.
-- **Ninja:** alternativa rápida a `make` para ejecutar la compilación. Paraleliza mejor.
-- **Python 3 + paquetes:** PX4 usa Python para scripts auxiliares (generación de código MAVLink, parámetros, etc.).
-- **Gazebo Harmonic:** el simulador 3D (te lo explico en el paso siguiente).
-- **Genmsg, jinja2, pyros-genmsg:** herramientas para generar código.
-- **Java JRE:** para `jMAVSim`, simulador alternativo más liviano.
-  
-El script tarda 15-30 minutos. Reinicia la PC al terminar — algunos cambios de permisos solo se aplican tras reinicio (especialmente el grupo dialout, que te da permiso de hablar con el flight controller por USB).
-# 
-### PASO 6 — Conocé el toolchain que se acaba de instalar
-Tomate un minuto para entender qué tienes ahora en tu sistema:
-- **`arm-none-eabi-gcc`** → Compilador. Toma código C/C++ y produce binarios para ARM Cortex-M (los chips de los flight controllers). "none-eabi" = "sin sistema operativo, ABI embebido". Es el mismo compilador que usa la mayoría de la industria embebida.
-- **`make`** → Herramienta clásica de Unix para automatizar tareas. PX4 te da un `Makefile` en la raíz con atajos. Por ejemplo, `make px4_sitl` significa "compila PX4 en modo simulación".
-- **`cmake`** → Generador de sistemas de build. No compila directamente; genera los archivos de Ninja/Make que sí compilan. PX4 tiene un sistema basado en CMake + Kconfig.
-- **`gdb-multiarch`** → El debugger. Te permite poner breakpoints, inspeccionar variables, ver qué hace tu firmware paso a paso cuando corre en el flight controller. Cuando programes drivers lo vas a usar mucho.
-- **`openocd`** → Software que habla con sondas de debug (ST-Link, J-Link) para flashear y debuggear hardware ARM. Junto con GDB es tu set de debugging.
-No hace falta dominarlo ahora. Solo saber que existen.
-# 
-### PASO 7 — Primera compilación: SITL
-**Qué es SITL.** Significa **Software In The Loop.** PX4 corre como un programa común en tu PC (no en hardware real), y un simulador le inventa los datos de los sensores. Es la forma segura y barata de probar firmware: si rompes algo, no se cae ningún dron.
 
-**Comando:**
-```c
-bash
+Instala: toolchain ARM, CMake, Ninja, Python, Gazebo Harmonic, jMAVSim, generadores de código, etc.
+
+Reiniciar al terminar.
+
+---
+
+## 6. Conocer el toolchain instalado
+
+- `arm-none-eabi-gcc`: compilador para ARM.  
+- `make`: sistema clásico de build.  
+- `cmake`: generador de build.  
+- `gdb-multiarch`: debugger.  
+- `openocd`: flasheo y debugging hardware.
+
+---
+
+## 7. Primera compilación: SITL
+
+```bash
 cd ~/PX4-Autopilot
 make px4_sitl
 ```
-La primera vez tarda 5-15 minutos. Vas a ver pasar mucha salida del compilador (es normal). Si todo sale bien, al final aparece:
-```c
+
+Si compila correctamente aparece:
+
+```
 [100%] Built target px4
 ```
-**Qué se compiló.** Un ejecutable Linux que es PX4 en sí. No corre nada todavía — solo está listo para correr.
 
-**Si fallan errores,** generalmente es porque te falta algo. Mensaje típico: "module not found", "command not found". Buscalo en Google con el error exacto, casi siempre se resuelve con `pip install xxx` o `sudo apt install xxx`.
-# 
-### PASO 8 — Instalar y conocer Gazebo
-**Qué es Gazebo.** Simulador físico 3D para robots. Modela física, gravedad, motores, vientos, sensores virtuales. Te muestra el dron volando en una ventana 3D mientras PX4 cree que está volando de verdad. Lo desarrolla **Open Robotics** (la misma gente de ROS).
+---
 
-**Versión:** Gazebo **Harmonic LTS.** Es la versión "long-term support" actual. PX4 v1.16 la usa por defecto.
+## 8. Instalar y verificar Gazebo Harmonic
 
-Si corriste el script del Paso 5, ya está instalado. Verificalo:
-```c
-bash
+```bash
 gz sim --version
 ```
-Debería responder con un número como `8.x.x`.
 
-**Cómo se conecta con PX4.** Cuando corras `make px4_sitl gz_x500`:
-1. Se inicia el ejecutable de PX4 (tu firmware).
-2. Se inicia Gazebo cargando un mundo virtual y un modelo 3D del dron (un X500 quad).
-3. PX4 y Gazebo se comunican por sockets de red:
-   - Gazebo le manda a PX4 datos falsos de IMU, GPS, barómetro como si fueran reales.
-   - PX4 le manda a Gazebo los comandos para los motores.
-4. Gazebo simula la física y muestra el dron moviéndose.
-Es un loop cerrado, igual que en hardware real, pero todo en software.
-# 
-### PASO 9 — Tu primer vuelo simulado
-```c
-bash
+Debe mostrar versión 8.x.x.
+
+---
+
+## 9. Primer vuelo simulado
+
+```bash
 cd ~/PX4-Autopilot
 make px4_sitl gz_x500
 ```
-Después de unos segundos se abren dos cosas:
-1. **Una ventana 3D de Gazebo** con un cuadricóptero parado en el suelo en un mundo verde.
-2. **Una shell de PX4** (parece terminal pero es la consola interna de PX4, llamada `pxh>`).
-En la consola `pxh>` escribe:
-```c
+
+En la consola `pxh>`:
+
+```bash
 commander takeoff
-```
-El dron se eleva a 2.5 m y queda en hover. Para aterrizar:
-```c
 commander land
 ```
-¡Felicitaciones, hiciste tu primer vuelo PX4!
 
-**Comandos útiles en `pxh>`:**
-```c
-commander arm                    # Armar motores (sin despegar)
-commander disarm                 # Desarmar
-commander takeoff                # Despegar
-commander land                   # Aterrizar
-listener vehicle_attitude        # Ver topic uORB de actitud
-listener vehicle_local_position  # Posición local
-listener sensor_combined         # Sensores fusionados
-top                              # Tareas corriendo y CPU
+Comandos útiles:
+
+```bash
+commander arm
+commander disarm
+listener vehicle_attitude
+listener vehicle_local_position
+listener sensor_combined
+top
 ```
-**`listener`** te muestra los datos en vivo de un topic uORB. Es muy útil para entender qué está pasando.
 
-**Qué es uORB.** Sistema de mensajería interno de PX4: los módulos publican datos en "topics" y otros módulos se suscriben a esos topics. Es similar a ROS pero más liviano. Por ejemplo, el módulo `ekf2` publica en `vehicle_attitude` y el módulo `mc_att_control` lo lee.
+---
 
-Para cerrar todo: `Ctrl + C` en la terminal de `pxh>`.
-# 
-### PASO 10 — Instalar QGroundControl
-**Qué es QGroundControl (QGC).** La estación de tierra oficial de PX4. Es la app que usas para ver el dron en un mapa, planificar misiones con waypoints, configurar parámetros, calibrar sensores, ver telemetría, descargar logs. Está hecha en Qt (C++) y es multiplataforma.
+## 10. Instalar QGroundControl
 
-**Cómo se conecta con el dron.** QGC habla **MAVLink** (protocolo binario estándar de drones) con el flight controller. En SITL se conecta automáticamente por UDP al puerto 14550. En hardware real se conecta por USB, radio telemetry o WiFi.
-
-**Qué es MAVLink.** Protocolo binario súper liviano para comunicar drones con estaciones de tierra. Cada mensaje tiene un header de 6 bytes + payload + CRC. Mensajes típicos: HEARTBEAT (latido cada segundo), ATTITUDE, GLOBAL_POSITION_INT, COMMAND_LONG.
-
-**Instalación en Ubuntu:**
-```c
-bash
+```bash
 sudo usermod -a -G dialout $USER
 sudo apt-get remove modemmanager -y
 sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
 sudo apt install libfuse2 -y
 ```
-Después descarga el AppImage desde [qgroundcontrol.com](qgroundcontrol.com). Es un solo archivo ejecutable, no requiere instalación:
-```c
-bash
+
+Ejecutar AppImage:
+
+```bash
 chmod +x ~/Downloads/QGroundControl.AppImage
 ~/Downloads/QGroundControl.AppImage
 ```
-**Cuando se abre con SITL corriendo,** automáticamente detecta el dron y aparece en el mapa.
-# 
-### PASO 11 — Misión autónoma en simulación
-Con QGC abierto y SITL corriendo:
-1. Anda a la pestaña **Plan** (icono de mapa con waypoints).
-2. Haz clic en el mapa para crear waypoints.
-3. Toca **Upload** para subir la misión al "dron".
-4. Vuelve a la pestaña **Fly.**
-5. Toca **Slide to confirm — Start mission.**
-El dron despega solo, vuela los waypoints y vuelve. **Estás ejecutando una misión autónoma** — el mismo flujo que un dron agrícola fumigando un campo o un dron de inspección recorriendo torres de alta tensión.
-# 
-### PASO 12 — Editor de código: VS Code
-**Qué es VS Code.** Editor de código de Microsoft, gratuito y open source. Es el estándar de la industria. Lo vas a usar para leer y modificar el código fuente de PX4.
 
-**Instalación:**
-```c
-bash
+---
+
+## 11. Misión autónoma en simulación
+
+1. Abrir QGC.  
+2. Ir a **Plan**.  
+3. Crear waypoints.  
+4. Upload.  
+5. En **Fly**, iniciar misión.
+
+---
+
+## 12. Editor de código: VS Code
+
+```bash
 sudo snap install code --classic
-```
-**Extensiones esenciales para PX4:**
-- **C/C++** (Microsoft) — autocompletado e IntelliSense para C++.
-- **CMake Tools** — integración con el sistema de build.
-- **Cortex-Debug** — debugger para ARM Cortex-M.
-- **GitLens** — superpoderes de Git dentro del editor.
-- **PX4 Tools** — extensión específica con snippets y configuraciones.
-Abre PX4 en VS Code:
-```c
-bash
 cd ~/PX4-Autopilot
 code .
 ```
-Carpetas importantes para mirar:
-- `src/modules/mc_att_control/` — controlador de actitud para multirotor.
-- `src/modules/ekf2/` — filtro de Kalman extendido (estimación de estado).
-- `src/drivers/imu/` — drivers de IMU.
-- `boards/px4/fmu-v6x/` — definición de hardware del Pixhawk 6X.
-# 
-### PASO 13 — Compilar para hardware real
-Cuando ya jugaste con SITL y querés flashear un Pixhawk físico:
-```c
-bash
-make px4_fmu-v6x_default            # Para Pixhawk 6X
-make px4_fmu-v6c_default            # Para Pixhawk 6C
-make cubepilot_cubeorange           # Para Cube Orange
-make holybro_durandal-v1_default    # Para Durandal
+
+Extensiones recomendadas: C/C++, CMake Tools, Cortex-Debug, GitLens, PX4 Tools.
+
+---
+
+## 13. Compilar para hardware real
+
+```bash
+make px4_fmu-v6x_default
+make px4_fmu-v6c_default
+make cubepilot_cubeorange
+make holybro_durandal-v1_default
 ```
-**Qué hace este comando.** Compila PX4 con el toolchain ARM (no x86) y produce un archivo `.px4` en `build/<placa>/`. Ese archivo es el firmware listo para flashear.
 
-**Diferencia con SITL.** En SITL compilaste para tu CPU (x86_64) sobre Linux. Para hardware real cross-compilás a ARM Cortex-M7 sobre NuttX. Mismo código fuente, distinto target.
+Produce un `.px4` listo para flashear.
 
-**Qué es NuttX.** El RTOS (sistema operativo de tiempo real) sobre el que corre PX4 en hardware real. Es POSIX-compliant (similar a Unix), licencia Apache 2.0, mantenido por la Apache Software Foundation desde 2022. PX4 lo usa porque le da multitarea, primitivas de sincronización y un sistema de archivos virtual sin sacrificar tiempo real.
-# 
-### PASO 14 — Flashear el firmware al Pixhawk
-**Qué es flashear.** Cargar el firmware compilado a la memoria flash del microcontrolador del Pixhawk. Una vez flasheado, el chip arranca solo con ese firmware cada vez que prendes el dron.
+---
 
-**Forma fácil — desde QGroundControl:**
-1. Conecta el Pixhawk a la PC por USB.
-2. Abre QGC. Anda a **Vehicle Setup → Firmware.**
-3. Toca la pestaña **Advanced Settings → Custom firmware file.**
-4. Apunta al `.px4` que compilaste.
-Espera a que termine (1-2 minutos).
-**Forma terminal:**
-```c
-bash
+## 14. Flashear firmware al Pixhawk
+
+### Desde QGC
+1. Conectar Pixhawk por USB.  
+2. Vehicle Setup → Firmware.  
+3. Advanced Settings → Custom firmware file.  
+4. Seleccionar `.px4`.
+
+### Desde terminal
+```bash
 make px4_fmu-v6x_default upload
 ```
-Si el Pixhawk está conectado por USB, lo detecta y flashea solo.
-# 
-### PASO 15 — Configuración inicial del dron real
-Con QGC y el Pixhawk conectado:
-1. **Sensors** → calibra brújula, acelerómetro, giróscopo, nivel horizontal. Tienes que mover físicamente el dron en cada orientación que QGC te pide.
-2. **Radio** → calibra el control remoto moviendo todos los sticks y switches.
-3. **Flight Modes** → asignas cada switch del control a un modo (Stabilized, Position, Mission, RTL...).
-4. **Power** → seteas voltaje y capacidad de la batería para que la telemetría sea correcta.
-5. **Safety** → fail-safes, geofence, return-to-launch altitude.
-6. **Tuning** — sólo después de haber volado un poco. Acá ajustas ganancias PID.
 
-**Qué son los modos de vuelo (los más importantes):**
-- **Manual / Acro:** el dron hace exactamente lo que tu dices. Si sueltas los sticks, se cae. Solo para pilotos experimentados.
-- **Stabilized:** nivela actitud automáticamente, tu controlas el ángulo. Para principiantes.
-- **Position:** usa GPS para mantener posición si sueltas los sticks. Lo más cómodo.
-- **Mission:** ejecuta los waypoints que cargaste con QGC.
-- **Return To Launch (RTL):** el dron vuelve solo al punto de despegue. Tu botón de pánico.
-# 
-### PASO 16 — Primer vuelo real (precauciones)
-**Antes de volar, siempre:**
-- Quita las hélices la primera vez. Prueba armar motores y mover sticks **sin hélices** para verificar que cada motor gira en la dirección correcta.
-- Usa una zona abierta sin gente cerca (mínimo 30 m de radio).
-- Ten un piloto de seguridad con experiencia al lado las primeras veces.
-- Activa el modo **Stabilized** o **Position** (no Manual/Acro hasta que sepas).
-- **Conoce tu botón de RTL** para emergencias.
-- Verifica que la batería esté cargada al 100 %, hélices apretadas, todo aterrizable.
-- En Chile: tener credencial de piloto otorgada por la DGAC, registrar tu aeronave y contar con un seguro.
-# 
-### PASO 17 — Próximos pasos: empezar a desarrollar
-Cuando ya tengas todo el flujo funcionando, los pasos siguientes para empezar a aportar:
-1. **Leer el código de un módulo simple.** Empieza por `src/examples/px4_simple_app/` — el "hello world" de PX4.
-2. **Modificar parámetros desde el código.** Aprende a definir y leer parámetros con `PARAM_DEFINE_FLOAT`.
-3. **Suscribirte a un topic uORB.** Escribe un módulo que escuche `vehicle_attitude` y haga algo con eso.
-4. **Escribir tu primer driver.** Toma un sensor I2C/SPI y escribí su driver siguiendo la estructura de `src/drivers/`.
-5. **Hacer tu primer Pull Request.** Aunque sea documentación o un fix chico, te da experiencia con el flujo de la comunidad.
-# 
-### Errores comunes y cómo resolverlos
+---
 
-| Error	| Solución |
-|--------|---------|
-| `make: command not found`  |  Falta build-essential: `sudo apt install build-essential` |
-| `ModuleNotFoundError: No module named 'xxx'`  |   Falta paquete Python: `pip3 install xxx` o re-correr `Tools/setup/ubuntu.sh` |
-| Gazebo no abre o crashea |	GPU sin drivers OpenGL apropiados, o estás en VM/WSL2 sin aceleración. Prueba `HEADLESS=1 make px4_sitl gz_x500` |
-| QGC no detecta SITL	| Puerto 14550 ocupado o firewall. Cierra otras instancias y revisa `sudo ufw status` |
-| Pixhawk no se detecta por USB	| Falta agregar usuario al grupo `dialout`: `sudo usermod -aG dialout $USER`, después cierra sesión y vuelve a entrar |
-| `error: please commit your changes...` al hacer git pull	| Tienes cambios locales no committeados: `git stash`, `git pull`, `git stash pop` |
+## 15. Configuración inicial del dron real
 
-# 
-### Recursos para profundizar
-- **Documentación oficial:** docs.px4.io
-- **Discord PX4 (Dronecode):** discord.gg/dronecode
-- **Foro:** discuss.px4.io
-- **YouTube:** canal oficial PX4 Autopilot, Carbon Aeronautics, Phil's Lab
-- **En español:** Embebidos32 (groups.google.com/g/embebidos32)
-- **Repositorio:** github.com/PX4/PX4-Autopilot
-# 
-### Estimaciones de tiempo
-- **Hasta el Paso 11 (vuelo simulado completo):** un fin de semana de 8-10 horas si nada explota.
-- **Hasta el Paso 16 (primer vuelo real):** 2-4 semanas a ritmo de aprendiz.
-- **Hasta entender bien la arquitectura interna:** 3-6 meses.
-- **Hasta poder modificar módulos con confianza:** 1 año.
-Una vez que tengas todo este flujo funcionando, puedes empezar a aportar de verdad al rubro firmware de drones.
+En QGC:
 
+1. **Sensors**: calibrar IMU, magnetómetro, nivel.  
+2. **Radio**: calibrar sticks.  
+3. **Flight Modes**: asignar modos.  
+4. **Power**: configurar batería.  
+5. **Safety**: failsafe, geofence, RTL.  
+6. **Tuning**: ajustar PID solo después de volar.
 
+Modos importantes: Manual/Acro, Stabilized, Position, Mission, RTL.
 
+---
 
+## 16. Primer vuelo real: precauciones
 
+- Probar sin hélices primero.  
+- Zona abierta.  
+- Piloto de seguridad.  
+- Usar Stabilized o Position.  
+- Conocer botón RTL.  
+- Batería cargada.  
+- En Chile: credencial DGAC, registro aeronave, seguro.
 
+---
+
+## 17. Próximos pasos para desarrollo
+
+1. Leer `px4_simple_app`.  
+2. Definir parámetros con `PARAM_DEFINE_FLOAT`.  
+3. Suscribirse a topics uORB.  
+4. Escribir un driver.  
+5. Hacer un Pull Request.
+
+---
+
+# 18. Diagnóstico por grupos de parámetros en QGroundControl
+
+Esta sección es la parte que faltaba en tu documento original.  
+Aquí se explica cómo diagnosticar fallas del dron **solo usando los parámetros de QGC**, sin tocar código fuente.
+
+---
+
+## 18.1 Grupo EKF2 — Estimador de estado
+
+Diagnostica:
+
+- Pérdida de GPS.  
+- Inconsistencias IMU–GPS.  
+- Problemas de magnetómetro.  
+- Vibraciones.  
+- Altitud inestable.
+
+Parámetros clave:
+
+- `EKF2_AID_MASK`: fuentes de ayuda (GPS, visión, baro).  
+- `EKF2_GPS_CHECK`: validación del GPS.  
+- `EKF2_MAG_NOISE`: ruido del magnetómetro.  
+- `EKF2_IMU_POS_X/Y/Z`: posición del IMU.  
+- `EKF2_BARO_NOISE`: ruido del barómetro.
+
+Indicadores:
+
+- Innovaciones altas.  
+- Mensajes de “EKF variance”.  
+- Resets de heading.  
+- Rechazo de GPS.
+
+---
+
+## 18.2 Grupo MC_ — Control de actitud
+
+Diagnostica:
+
+- Oscilaciones.  
+- Vibraciones.  
+- Respuesta lenta.  
+- Yaw inestable.
+
+Parámetros clave:
+
+- `MC_ROLL_P`, `MC_PITCH_P`: ganancia proporcional.  
+- `MC_ROLLRATE_P`, `MC_PITCHRATE_P`: velocidad angular.  
+- `MC_YAW_P`, `MC_YAWRATE_P`: control de yaw.  
+- `MC_THR_MIN`, `MC_THR_MAX`: límites de empuje.
+
+Indicadores:
+
+- Oscilaciones rápidas: ganancia alta.  
+- Respuesta lenta: ganancia baja.  
+- Vibraciones: ruido IMU.  
+- Deriva en yaw: magnetómetro o ganancia baja.
+
+---
+
+## 18.3 Grupo MPC_ — Control de posición
+
+Diagnostica:
+
+- Altura inestable.  
+- Drift horizontal.  
+- Movimientos bruscos.  
+- Respuesta lenta.
+
+Parámetros clave:
+
+- `MPC_Z_P`, `MPC_Z_VEL_P`: control vertical.  
+- `MPC_XY_P`, `MPC_XY_VEL_P`: control horizontal.  
+- `MPC_ACC_HOR`, `MPC_ACC_UP`: aceleraciones máximas.  
+- `MPC_JERK_MAX`: jerk máximo.  
+- `MPC_THR_HOVER`: empuje de hover.
+
+Indicadores:
+
+- Altura fluctuante: barómetro o Z_P incorrecto.  
+- Drift: GPS o XY_P bajo.  
+- Movimientos bruscos: aceleraciones altas.  
+- Respuesta lenta: aceleraciones bajas.
+
+---
+
+## 18.4 Grupo SENS_ — Sensores
+
+Diagnostica:
+
+- IMU ruidosa.  
+- Magnetómetro interferido.  
+- Barómetro incorrecto.  
+- GPS inestable.
+
+Parámetros clave:
+
+- `SENS_IMU_MODE`  
+- `SENS_MAG_MODE`  
+- `SENS_BARO_QNH`  
+- `SENS_GPS_MASK`
+
+Indicadores:
+
+- Altitud errática.  
+- Yaw inestable.  
+- Vibraciones.  
+- Posición errática.
+
+---
+
+## 18.5 Grupo BAT_ — Batería
+
+Diagnostica:
+
+- Caída de tensión.  
+- Número de celdas incorrecto.  
+- Lecturas erróneas.
+
+Parámetros clave:
+
+- `BAT_N_CELLS`  
+- `BAT_V_EMPTY`  
+- `BAT_V_CHARGED`  
+- `BAT_V_LOAD_DROP`
+
+Indicadores:
+
+- Failsafe prematuro.  
+- Voltaje cae rápido.  
+- Lecturas inconsistentes.
+
+---
+
+## 18.6 Grupo COM_ — Failsafe y comunicación
+
+Diagnostica:
+
+- Pérdida de RC.  
+- Failsafe por batería.  
+- Failsafe por GPS.  
+- Geofence.
+
+Parámetros clave:
+
+- `COM_RC_LOSS_T`  
+- `COM_LOW_BAT_ACT`  
+- `COM_OBS_AVOID`  
+- `COM_GEOFENCE_ACTION`
+
+Indicadores:
+
+- RTL inesperado.  
+- Aterrizaje automático.  
+- Mensajes de geofence.  
+- Pérdida de control.
+
+---
+
+# 19. Errores comunes y soluciones
+
+| Error | Solución |
+|-------|----------|
+| `make: command not found` | `sudo apt install build-essential` |
+| `ModuleNotFoundError: No module named 'xxx'` | `pip3 install xxx` o rerun del setup |
+| Gazebo no abre | Ejecutar `HEADLESS=1 make px4_sitl gz_x500` |
+| QGC no detecta SITL | Revisar firewall y puerto 14550 |
+| Pixhawk no detectado | `sudo usermod -aG dialout $USER` |
+| Error de git pull | `git stash`, `git pull`, `git stash pop` |
+
+---
+
+# 20. Recursos
+
+- docs.px4.io  
+- discord.gg/dronecode  
+- discuss.px4.io  
+- YouTube PX4 Autopilot  
+- Embebidos32  
+- github.com/PX4/PX4-Autopilot
+
+---
+
+# 21. Estimaciones de tiempo
+
+- Vuelo simulado: 8–10 horas.  
+- Primer vuelo real: 2–4 semanas.  
+- Entender arquitectura: 3–6 meses.  
+- Modificar módulos con confianza: 1 año.
+
+---
