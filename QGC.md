@@ -120,3 +120,145 @@ Ejemplo de archivo `.plan` (JSON simplificado):
 4. Observa cómo el dron sigue la ruta definida en el mapa.
 
 ---
+
+
+
+
+
+# Enlace SiK 915 MHz
+
+Enlace SiK 915 MHz para Drones
+
+## 1. Introducción
+
+El enlace **SiK 915 MHz** es uno de los sistemas de telemetría más utilizados en drones basados en PX4, ArduPilot y otros autopilotos compatibles con **MAVLink**. Su función principal es proporcionar un canal de comunicación bidireccional entre el dron y la estación terrestre, permitiendo enviar comandos, recibir datos de vuelo y monitorear el estado del vehículo en tiempo real.
+
+Este documento explica su funcionamiento, características, configuración, recomendaciones y buenas prácticas.
+
+## 2. ¿Qué es un enlace SiK?
+
+El término **SiK** se refiere al firmware open‑source utilizado en radios de telemetría basados en los chips **HopeRF RFM22/23** o equivalentes. Estos módulos operan en bandas **ISM**, siendo **915 MHz** la más común en América.
+
+Los radios SiK se componen de:
+
+- Un módulo **USB** para la estación terrestre.
+- Un módulo **TTL/UART** para el autopiloto.
+- Firmware SiK con soporte para MAVLink.
+- Antenas omnidireccionales o direccionales según el caso.
+
+## 3. Características principales
+
+- **Frecuencia:** 902–928 MHz (banda ISM).
+- **Potencia típica:** 100 mW (20 dBm), aunque existen versiones de mayor potencia.
+- **Modulación:** GFSK.
+- **Protocolos:** MAVLink, con soporte para corrección de errores (ECC).
+- **Técnicas de robustez:** FHSS (Frequency Hopping Spread Spectrum).
+- **Velocidad aérea:** 64–250 kbps según configuración.
+- **Alcance:** 300–500 m con antenas estándar; varios kilómetros con antenas de alta ganancia.
+
+## 4. Arquitectura del sistema
+
+[Ground Station] ←USB→ [Radio SiK] ⇆ (915 MHz) ⇆ [Radio SiK] ←UART→ [Autopiloto]
+
+- El PC detecta el módulo SiK como **puerto COM.**
+- Mission Planner o QGroundControl se comunican por MAVLink.
+- El enlace RF transmite telemetría y comandos.
+
+**Importante:** El enlace SiK funciona en **Windows**, no dentro de WSL2.
+
+## 5. Conexión física
+
+### 5.1 En la estación terrestre
+
+- Conectar el módulo SiK USB al PC.
+- Windows asignará un puerto COM.
+
+### 5.2 En el dron
+
+Conectar el módulo SiK al puerto **TELEM1/TELEM2** del autopiloto:
+
+- TX ↔ RX
+- RX ↔ TX
+- 5V
+- GND
+
+Usualmente con conector **JST‑GH de 6 pines.**
+
+## 6. Configuración del enlace SiK
+
+La configuración se realiza desde Mission Planner o QGroundControl.
+
+### 6.1 Parámetros comunes
+
+- **Baud Rate:** 57 600 o 115 200.
+- **Air Speed:** 64–250 kbps.
+- **Net ID:** Identificador de red para evitar interferencias.
+- **TX Power:** Potencia de transmisión.
+- **ECC:** Corrección de errores.
+- **LBT:** Listen Before Talk (según región).
+- **FHSS:** Hopping para robustez.
+
+### 6.2 Proceso de configuración
+
+- Abrir Mission Planner.
+- Ir a Initial Setup → Sik Radio.
+- Seleccionar el puerto COM.
+- Leer parámetros.
+- Ajustar valores.
+- Escribir configuración.
+
+## 7. Regulación y aspectos legales
+
+La banda 915 MHz es ISM en América, pero cada país tiene límites de potencia.
+
+En Chile:
+
+- Banda 902–928 MHz permitida.
+- Límites de potencia según SUBTEL.
+- Evitar módulos de 1W sin certificación.
+
+## 8. Alcance y rendimiento
+
+El alcance depende de:
+
+- Potencia del módulo.
+- Ganancia de antenas.
+- Línea de vista.
+- Interferencias.
+- Altura de las antenas.
+  
+Valores típicos
+| Condición | Alcance aproximado |
+|---|---|
+| Antenas estándar 2 dBi | 300–500 m |
+| Antena direccional en estación | 1–3 km |
+| Condiciones ideales | 5+ km |
+
+## 9. Buenas prácticas
+
+- Mantener **línea de vista.**
+- Usar antenas de calidad.
+- Configurar **Net ID** único.
+- No usar potencias ilegales.
+- Probar **RSSI** antes del vuelo.
+- Activar **failsafe** en el autopiloto.
+
+## 10. Limitaciones
+
+- No posee cifrado nativo.
+- Sensible a interferencias urbanas.
+- No apto para control crítico (solo telemetría).
+- No funciona dentro de WSL2.
+
+## 11. Alternativas al SiK
+
+- Enlaces **Herelink** (2.4 GHz, video + telemetría).
+- Enlaces **RFD900x** (915 MHz, largo alcance).
+- Telemetría por **WiFi.**
+- Telemetría por **4G/LTE.**
+
+## 12. Conclusión
+
+El enlace **SiK 915 MHz** es una solución confiable, económica y ampliamente compatible para telemetría MAVLink en drones. Su facilidad de uso, robustez y disponibilidad lo convierten en una excelente opción para proyectos personales, investigación y operaciones de corto a mediano alcance.
+
+Para vuelos reales, se recomienda validar la configuración, revisar la regulación local y realizar pruebas de campo progresivas.
