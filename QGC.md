@@ -58,16 +58,15 @@ Comenzar con QGroundControl (QGC) y PX4 es un proceso sencillo. Simplemente inst
 
 ---
 
-## 2. Conectar el simulador con QGroundControl
-1. Inicia el simulador:
-   - PX4 SITL con jMAVSim:
-     ```bash
-     make px4_sitl jmavsim
-     ```
-   - PX4 SITL con Gazebo:
-     ```bash
-     make px4_sitl gazebo
-     ```
+## 2. Compilar PX4 SITL con QGroundControl
+
+```bash
+cd ~/PX4-Autopilot
+# compilar y lanzar con Ignition/Gazebo para un airframe (ejemplo x500)
+make px4_sitl gz_x500 -j$(nproc)
+```
+
+
 2. Abre **QGroundControl**.
 3. Verifica que el dron virtual aparece conectado (telemetría en tiempo real).
 
