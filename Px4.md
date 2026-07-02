@@ -227,8 +227,6 @@ En QGC:
 5. **Safety**: failsafe, geofence, RTL.  
 6. **Tuning**: ajustar PID solo después de volar.
 
-Modos importantes: Manual/Acro, Stabilized, Position, Mission, RTL.
-
 ---
 
 ## 16. Primer vuelo real: precauciones
@@ -255,8 +253,7 @@ Modos importantes: Manual/Acro, Stabilized, Position, Mission, RTL.
 
 # 18. Diagnóstico por grupos de parámetros en QGroundControl
 
-Esta sección es la parte que faltaba en tu documento original.  
-Aquí se explica cómo diagnosticar fallas del dron **solo usando los parámetros de QGC**, sin tocar código fuente.
+Esta sección permite diagnosticar fallas del dron **solo usando QGC**, sin tocar código fuente.
 
 ---
 
@@ -272,18 +269,11 @@ Diagnostica:
 
 Parámetros clave:
 
-- `EKF2_AID_MASK`: fuentes de ayuda (GPS, visión, baro).  
-- `EKF2_GPS_CHECK`: validación del GPS.  
-- `EKF2_MAG_NOISE`: ruido del magnetómetro.  
-- `EKF2_IMU_POS_X/Y/Z`: posición del IMU.  
-- `EKF2_BARO_NOISE`: ruido del barómetro.
-
-Indicadores:
-
-- Innovaciones altas.  
-- Mensajes de “EKF variance”.  
-- Resets de heading.  
-- Rechazo de GPS.
+- `EKF2_AID_MASK`  
+- `EKF2_GPS_CHECK`  
+- `EKF2_MAG_NOISE`  
+- `EKF2_IMU_POS_X/Y/Z`  
+- `EKF2_BARO_NOISE`
 
 ---
 
@@ -298,17 +288,10 @@ Diagnostica:
 
 Parámetros clave:
 
-- `MC_ROLL_P`, `MC_PITCH_P`: ganancia proporcional.  
-- `MC_ROLLRATE_P`, `MC_PITCHRATE_P`: velocidad angular.  
-- `MC_YAW_P`, `MC_YAWRATE_P`: control de yaw.  
-- `MC_THR_MIN`, `MC_THR_MAX`: límites de empuje.
-
-Indicadores:
-
-- Oscilaciones rápidas: ganancia alta.  
-- Respuesta lenta: ganancia baja.  
-- Vibraciones: ruido IMU.  
-- Deriva en yaw: magnetómetro o ganancia baja.
+- `MC_ROLL_P`, `MC_PITCH_P`  
+- `MC_ROLLRATE_P`, `MC_PITCHRATE_P`  
+- `MC_YAW_P`, `MC_YAWRATE_P`  
+- `MC_THR_MIN`, `MC_THR_MAX`
 
 ---
 
@@ -323,18 +306,11 @@ Diagnostica:
 
 Parámetros clave:
 
-- `MPC_Z_P`, `MPC_Z_VEL_P`: control vertical.  
-- `MPC_XY_P`, `MPC_XY_VEL_P`: control horizontal.  
-- `MPC_ACC_HOR`, `MPC_ACC_UP`: aceleraciones máximas.  
-- `MPC_JERK_MAX`: jerk máximo.  
-- `MPC_THR_HOVER`: empuje de hover.
-
-Indicadores:
-
-- Altura fluctuante: barómetro o Z_P incorrecto.  
-- Drift: GPS o XY_P bajo.  
-- Movimientos bruscos: aceleraciones altas.  
-- Respuesta lenta: aceleraciones bajas.
+- `MPC_Z_P`, `MPC_Z_VEL_P`  
+- `MPC_XY_P`, `MPC_XY_VEL_P`  
+- `MPC_ACC_HOR`, `MPC_ACC_UP`  
+- `MPC_JERK_MAX`  
+- `MPC_THR_HOVER`
 
 ---
 
@@ -354,13 +330,6 @@ Parámetros clave:
 - `SENS_BARO_QNH`  
 - `SENS_GPS_MASK`
 
-Indicadores:
-
-- Altitud errática.  
-- Yaw inestable.  
-- Vibraciones.  
-- Posición errática.
-
 ---
 
 ## 18.5 Grupo BAT_ — Batería
@@ -377,12 +346,6 @@ Parámetros clave:
 - `BAT_V_EMPTY`  
 - `BAT_V_CHARGED`  
 - `BAT_V_LOAD_DROP`
-
-Indicadores:
-
-- Failsafe prematuro.  
-- Voltaje cae rápido.  
-- Lecturas inconsistentes.
 
 ---
 
@@ -402,29 +365,88 @@ Parámetros clave:
 - `COM_OBS_AVOID`  
 - `COM_GEOFENCE_ACTION`
 
-Indicadores:
+---
 
-- RTL inesperado.  
-- Aterrizaje automático.  
-- Mensajes de geofence.  
-- Pérdida de control.
+# 19. Tabla de diagnóstico operativo (síntoma → grupo → qué revisar)
+
+Esta es la tabla que te pidieron explícitamente.
 
 ---
 
-# 19. Errores comunes y soluciones
+## 19.1 Síntomas relacionados con armado / failsafe
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| No arma | COM_, BAT_, SENS_ | `COM_ARM_WO_GPS`, `COM_ARM_EKF_HGT`, `COM_ARM_MAG`, `BAT_N_CELLS`, calibración de sensores |
+| No arma por GPS | EKF2_, GPS_, COM_ | `EKF2_GPS_CHECK`, calidad GPS, `COM_ARM_WO_GPS` |
+| Failsafe al despegar | COM_, BAT_, EKF2_ | `COM_LOW_BAT_ACT`, `BAT_V_LOAD_DROP`, innovaciones EKF |
+
+---
+
+## 19.2 Síntomas relacionados con deriva
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| Deriva lateral | MPC_, EKF2_, GPS_ | `MPC_XY_P`, `MPC_XY_VEL_P`, calidad GPS |
+| Deriva en altura | MPC_, EKF2_, SENS_ | `MPC_Z_P`, barómetro, innovaciones EKF |
+| Deriva en yaw | EKF2_, SENS_, MC_ | `EKF2_MAG_NOISE`, magnetómetro, `MC_YAW_P` |
+
+---
+
+## 19.3 Síntomas relacionados con oscilaciones
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| Oscilaciones rápidas | MC_ | `MC_ROLL_P`, `MC_PITCH_P`, ganancias altas |
+| Oscilaciones lentas | MPC_, MC_ | `MPC_XY_P`, `MPC_Z_P` |
+| Vibraciones | SENS_, EKF2_ | IMU, innovaciones EKF |
+
+---
+
+## 19.4 Síntomas relacionados con control
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| Respuesta lenta | MC_, MPC_ | `MC_ROLL_P`, `MPC_ACC_HOR` |
+| Movimientos bruscos | MPC_ | `MPC_ACC_HOR`, `MPC_JERK_MAX` |
+| No mantiene posición | EKF2_, GPS_, MPC_ | `EKF2_GPS_CHECK`, `MPC_XY_P` |
+
+---
+
+## 19.5 Síntomas relacionados con batería
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| Caída brusca de voltaje | BAT_ | `BAT_V_LOAD_DROP`, `BAT_N_CELLS` |
+| Failsafe inesperado | BAT_, COM_ | `COM_LOW_BAT_ACT`, `BAT_V_EMPTY` |
+| Lecturas inconsistentes | BAT_ | calibración de batería |
+
+---
+
+## 19.6 Síntomas relacionados con sensores
+
+| Síntoma | Grupo | Qué revisar |
+|--------|--------|-------------|
+| Altitud errática | SENS_, EKF2_, MPC_ | barómetro, innovaciones EKF |
+| Posición errática | GPS_, EKF2_ | calidad GPS |
+| Yaw inestable | SENS_, EKF2_, MC_ | magnetómetro, interferencias |
+
+---
+
+# 20. Errores comunes y soluciones
 
 | Error | Solución |
 |-------|----------|
 | `make: command not found` | `sudo apt install build-essential` |
-| `ModuleNotFoundError: No module named 'xxx'` | `pip3 install xxx` o rerun del setup |
-| Gazebo no abre | Ejecutar `HEADLESS=1 make px4_sitl gz_x500` |
-| QGC no detecta SITL | Revisar firewall y puerto 14550 |
+| `ModuleNotFoundError: No module named 'xxx'` | `pip3 install xxx` |
+| Gazebo no abre | `HEADLESS=1 make px4_sitl gz_x500` |
+| QGC no detecta SITL | revisar firewall |
 | Pixhawk no detectado | `sudo usermod -aG dialout $USER` |
-| Error de git pull | `git stash`, `git pull`, `git stash pop` |
+| Error git pull | `git stash`, `git pull`, `git stash pop` |
 
 ---
 
-# 20. Recursos
+# 21. Recursos
 
 - docs.px4.io  
 - discord.gg/dronecode  
@@ -435,7 +457,7 @@ Indicadores:
 
 ---
 
-# 21. Estimaciones de tiempo
+# 22. Estimaciones de tiempo
 
 - Vuelo simulado: 8–10 horas.  
 - Primer vuelo real: 2–4 semanas.  
