@@ -125,7 +125,7 @@ En **Terminal A (WSL2, con tu venv activado)**:
 
 ```
 cd ~
-nano mission_raw_demo.py
+nano mission_raw_auto.py
 ```
 Pega este código completo, ya adaptado para SITL y Gazebo:
 ```
@@ -134,68 +134,59 @@ import asyncio
 from mavsdk import System
 from mavsdk import mission_raw
 
-async def px4_connect_drone():
+async def main():
     drone = System()
     await drone.connect(system_address="udpin://0.0.0.0:14540")
 
     print("Esperando conexión...")
     async for state in drone.core.connection_state():
         if state.is_connected:
-            print("-- PX4 conectado a MAVSDK")
-            return drone
+            print("PX4 conectado")
+            break
 
-async def run():
-    drone = await px4_connect_drone()
-    await run_drone(drone)
+    # 1. Armar
+    print("Armando...")
+    await drone.action.arm()
 
-async def run_drone(drone):
+    # 2. Despegar
+    print("Despegando...")
+    await drone.action.takeoff()
+    await asyncio.sleep(5)
+
+    # 3. Subir misión RAW
+    print("Subiendo misión RAW...")
     mission_items = []
 
-    # Waypoint 1
     mission_items.append(
         mission_raw.MissionItem(
-            0,   # seq
-            3,   # frame (MAV_FRAME_GLOBAL_RELATIVE_ALT_INT)
-            16,  # command (MAV_CMD_NAV_WAYPOINT)
-            1,   # current (1 = first/current)
-            1,   # autocontinue
-            0,   # param1 (hold time)
-            10,  # param2 (acceptance radius)
-            0,   # param3 (pass radius)
-            0,   # param4 (yaw)
-            int(47.398170 * 10**7),  # x: lat * 1e7
-            int(8.545649 * 10**7),   # y: lon * 1e7
-            10.0,                    # z: alt (m)
-            0    # mission_type
-        )
-    )
-
-    # Waypoint 2
-    mission_items.append(
-        mission_raw.MissionItem(
-            1,
-            3,
-            16,
-            0,
-            1,
-            0,
-            10,
-            0,
-            0,
-            int(47.398241 * 10**7),
-            int(8.545593 * 10**7),
+            0, 3, 16, 1, 1,
+            0, 10, 0, 0,
+            int(47.398170 * 1e7),
+            int(8.545649 * 1e7),
             10.0,
             0
         )
     )
 
-    print("-- Subiendo misión RAW")
+    mission_items.append(
+        mission_raw.MissionItem(
+            1, 3, 16, 0, 1,
+            0, 10, 0, 0,
+            int(47.398241 * 1e7),
+            int(8.545593 * 1e7),
+            10.0,
+            0
+        )
+    )
+
     await drone.mission_raw.upload_mission(mission_items)
-    print("-- Misión RAW subida correctamente")
+    print("Misión RAW subida")
 
-if __name__ == "__main__":
-    asyncio.run(run())
+    # 4. Iniciar misión RAW automáticamente
+    print("Iniciando misión RAW...")
+    await drone.mission_raw.start_mission()
 
+asyncio.run(main())
 ```
 Guarda con **CTRL+O**, Enter, y sal con **CTRL+X**.
 
@@ -206,7 +197,7 @@ Guarda con **CTRL+O**, Enter, y sal con **CTRL+X**.
 En **Terminal A (WSL2, venv activado)**:
 
 ```bash
-python mission_raw_demo.py
+python mission_raw_auto.py
 ```
 
 En **Terminal B (PX4 SITL)** deberías ver:
