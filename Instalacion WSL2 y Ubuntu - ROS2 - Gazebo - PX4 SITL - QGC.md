@@ -175,10 +175,8 @@ sudo apt install -y ros-humble-ros-gz ros-humble-gazebo-ros-pkgs
 
 ### Verificación y GUI
 ```bash
-# Ver versión (puede variar según alias instalado)
-gz --version
-# o
-ign --version
+# Ver versión
+ign gazebo --version
 
 # Lanzar simulador (requiere WSLg)
 gz sim -v 4
