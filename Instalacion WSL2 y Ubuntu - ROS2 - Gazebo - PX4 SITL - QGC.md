@@ -96,6 +96,15 @@ sudo rm -rf /usr/local/lib/libpx4* /usr/local/include/px4* /usr/local/share/px4*
 
 # 3. Instalar ROS 2 Humble (Ubuntu 22.04)
 
+### Configurar la configuración regional (Locale)
+Asegúrate de que tu sistema soporte UTF-8:
+```
+sudo apt update && sudo apt install locales
+sudo locale-gen en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+```
+
 ### Añadir repositorio y claves, instalar
 ```bash
 # Dependencias
@@ -136,6 +145,7 @@ ls /opt/ros/humble # debe listar carpetas de instalación
 ---
 
 # 4. Instalar Ignition Gazebo Fortress 6.18.0 (gz-fortress)
+https://gazebosim.org/docs/fortress/install_ubuntu/
 
 ### Añadir repositorio OSRF e instalar gz-fortress
 ```bash
