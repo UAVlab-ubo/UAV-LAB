@@ -14,7 +14,7 @@
 - Clona y compila **PX4 v1.15.0** (tag).  
 - Instala **gz-fortress 6.18.0** exactamente.  
 - Verifica ROS con `echo $ROS_DISTRO` (no dependas de `ros2 --version`).
-
+- Para que gazebo vaya fluido utiliza el controlador de gráficos [NVIDIA Game Ready Driver 552.22](https://www.nvidia.com/download/driverResults.aspx/224154/en-us/%C3%83%C6%92%C3%86%E2%80%99%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%85%C2%A1%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%A0/)
 ---
 
 # Índice rápido
