@@ -1,6 +1,6 @@
 > 02-07-2026
 
-# Instalar MAVSDK-Python para controlar dron en Gazebo
+# Instalar MAVSDK-Python para controlar dron
 ## Prerrequisitos
 - **Python 3.6+:**
   Si no sabes la versión de python:
