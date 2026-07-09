@@ -97,13 +97,42 @@ En **Terminal A (WSL2, con tu venv activado)**:
 cd ~
 nano mission_raw_auto.py
 ```
+
 Pega este código completo, ya adaptado para SITL y Gazebo:
 ```
 #!/usr/bin/env python3
 import asyncio
 from mavsdk import System
 from mavsdk import mission_raw
+from mavsdk.action import ActionError
+from mavsdk.telemetry import LandedState
 
+
+# ---------------------------
+# Esperar a que la misión RAW termine
+# ---------------------------
+async def wait_until_mission_finished(drone):
+    async for progress in drone.mission_raw.mission_progress():
+        print(f"Progreso misión RAW: {progress.current}/{progress.total}")
+        if progress.current == progress.total:
+            print("Misión RAW completada")
+            return
+
+
+# ---------------------------
+# Esperar a que PX4 confirme que está en el suelo
+# ---------------------------
+async def wait_until_landed(drone):
+    async for ls in drone.telemetry.landed_state():
+        print(f"LandedState: {ls}")
+        if ls == LandedState.ON_GROUND:
+            print("PX4 reporta ON_GROUND")
+            return
+
+
+# ---------------------------
+# SCRIPT PRINCIPAL
+# ---------------------------
 async def main():
     drone = System()
     await drone.connect(system_address="udpin://0.0.0.0:14540")
@@ -114,16 +143,38 @@ async def main():
             print("PX4 conectado")
             break
 
-    # 1. Armar
-    print("Armando...")
-    await drone.action.arm()
+    # --- LIMPIAR ESTADO LAND ---
+    print("Forzando HOLD...")
+    try:
+        await drone.action.hold()
+        await asyncio.sleep(1)
+        print("HOLD activado")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
 
-    # 2. Despegar
+    # --- CHEQUEAR ARMADO ---
+    async for armed in drone.telemetry.armed():
+        already_armed = armed
+        print(f"Estado armado inicial: {armed}")
+        break
+
+    if not already_armed:
+        print("Armando...")
+        try:
+            await drone.action.arm()
+            print("Armado correctamente")
+        except ActionError as e:
+            print(f"ARM falló: {e}")
+            return
+    else:
+        print("Ya estaba armado")
+
+    # --- DESPEGAR ---
     print("Despegando...")
     await drone.action.takeoff()
     await asyncio.sleep(5)
 
-    # 3. Subir misión RAW
+    # --- SUBIR MISIÓN RAW ---
     print("Subiendo misión RAW...")
     mission_items = []
 
@@ -152,9 +203,39 @@ async def main():
     await drone.mission_raw.upload_mission(mission_items)
     print("Misión RAW subida")
 
-    # 4. Iniciar misión RAW automáticamente
+    # --- INICIAR MISIÓN ---
     print("Iniciando misión RAW...")
     await drone.mission_raw.start_mission()
+
+    # --- ESPERAR A QUE LA MISIÓN TERMINE REALMENTE ---
+    print("Esperando finalización real de misión...")
+    await wait_until_mission_finished(drone)
+
+    # --- ATERRIZAR ---
+    print("Aterrizando...")
+    await drone.action.land()
+
+    # --- ESPERAR A QUE PX4 CONFIRME ATERRIZAJE ---
+    await wait_until_landed(drone)
+
+    # --- DESARMAR ---
+    print("Desarmando...")
+    try:
+        await drone.action.disarm()
+        print("Desarmado correctamente")
+    except ActionError as e:
+        print(f"Error al desarmar: {e}")
+
+    # --- VOLVER A HOLD ---
+    print("Volviendo a HOLD...")
+    try:
+        await drone.action.hold()
+        print("HOLD activado")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
+
+    print("Script finalizado sin errores.")
+
 
 asyncio.run(main())
 ```
@@ -219,7 +300,15 @@ Pega:
 ```python
 import asyncio
 from mavsdk import System
-from mavsdk.offboard import (OffboardError, PositionNedYaw)
+from mavsdk.offboard import OffboardError, PositionNedYaw
+from mavsdk.action import ActionError
+from mavsdk.telemetry import LandedState
+
+async def wait_until_landed(drone):
+    async for ls in drone.telemetry.landed_state():
+        if ls == LandedState.ON_GROUND:
+            print("PX4 reporta ON_GROUND")
+            return
 
 async def main():
     drone = System()
@@ -231,12 +320,43 @@ async def main():
             print("PX4 conectado")
             break
 
-    print("Armando...")
-    await drone.action.arm()
+    print("Esperando health flags...")
+    async for health in drone.telemetry.health():
+        if health.is_home_position_ok and health.is_local_position_ok:
+            print("PX4 listo para armar")
+            break
 
+    # --- LIMPIAR ESTADO LAND ---
+    print("Forzando HOLD para limpiar estado LAND...")
+    try:
+        await drone.action.hold()
+        await asyncio.sleep(1)
+        print("HOLD activado")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
+
+    # --- CHEQUEAR ARMADO ---
+    async for armed in drone.telemetry.armed():
+        already_armed = armed
+        print(f"Estado armado inicial: {armed}")
+        break
+
+    if not already_armed:
+        print("Armando...")
+        try:
+            await drone.action.arm()
+            print("Armado correcto")
+        except ActionError as e:
+            print(f"ARM falló: {e}")
+            return
+    else:
+        print("Ya estaba armado")
+
+    # --- PRIMER SETPOINT ---
     print("Enviando primer setpoint...")
     await drone.offboard.set_position_ned(PositionNedYaw(0, 0, -1, 0))
 
+    # --- ACTIVAR OFFBOARD ---
     print("Activando OFFBOARD...")
     try:
         await drone.offboard.start()
@@ -245,6 +365,7 @@ async def main():
         print(f"Error al activar OFFBOARD: {e._result.result}")
         return
 
+    # --- MOVIMIENTOS ---
     print("Moviendo 5 m hacia adelante...")
     await drone.offboard.set_position_ned(PositionNedYaw(5, 0, -1, 0))
     await asyncio.sleep(5)
@@ -253,11 +374,35 @@ async def main():
     await drone.offboard.set_position_ned(PositionNedYaw(5, 5, -1, 0))
     await asyncio.sleep(5)
 
+    # --- SALIR DE OFFBOARD ---
     print("Finalizando OFFBOARD...")
     await drone.offboard.stop()
+    await asyncio.sleep(1)
 
+    # --- ATERRIZAR ---
     print("Aterrizando...")
     await drone.action.land()
+
+    # --- ESPERAR A QUE PX4 CONFIRME ATERRIZAJE ---
+    await wait_until_landed(drone)
+
+    # --- DESARMAR ---
+    print("Desarmando...")
+    try:
+        await drone.action.disarm()
+        print("Desarmado correctamente")
+    except ActionError as e:
+        print(f"Error al desarmar: {e}")
+
+    # --- VOLVER A HOLD ---
+    print("Volviendo a HOLD...")
+    try:
+        await drone.action.hold()
+        print("HOLD activado")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
+
+    print("Script finalizado sin errores.")
 
 asyncio.run(main())
 ```
