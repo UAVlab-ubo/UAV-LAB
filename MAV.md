@@ -1,31 +1,4 @@
-**Resumen breve y directo:** **Desinstala `mavsdk` en WSL2, reinstálalo en un entorno virtual (venv), arranca PX4 SITL + Gazebo en WSL2 y usa los ejemplos `mission.py` / `mission_raw.py` de MAVSDK‑Python para escribir y subir misiones por código.** Los pasos abajo indican exactamente qué terminal usar y comandos a ejecutar.   [mavsdk.mavlink.io](https://mavsdk.mavlink.io/develop/en/python/quickstart.html)  [docs.px4.io](https://docs.px4.io/main/en/dev_setup/dev_env_windows_wsl)
-
-### 1. Preparación: qué terminales usar
-- **Terminal A (WSL2 Ubuntu 22.04)** — para instalar/desinstalar Python, pip, crear venv, instalar MAVSDK‑Python y ejecutar scripts Python.  
-- **Terminal B (WSL2 Ubuntu 22.04)** — para compilar/ejecutar PX4 SITL (make px4_sitl gz_x500).  
-- **Terminal C (opcional, VSCode integrada)** — REPL interactivo o depuración; puedes abrir una terminal WSL integrada en VSCode y usarla como A o B.   [docs.px4.io](https://docs.px4.io/main/en/dev_setup/dev_env_windows_wsl)
-
----
-
-### 2. Desinstalar todo lo relacionado con MAVSDK‑Python (sin tocar otros archivos)
-En **Terminal A** (WSL2):
-
-```bash
-# 1) desinstalar paquetes pip
-pip3 uninstall -y mavsdk aioconsole
-
-# 2) localizar posibles restos en site-packages y eliminarlos con cuidado
-python3 -c "import site,sys,os; print('\\n'.join(site.getsitepackages()+[site.getusersitepackages()]))"
-# luego inspecciona las rutas listadas y borra solo carpetas relacionadas:
-rm -rf ~/.local/lib/python3.*/site-packages/mavsdk*
-sudo rm -rf /usr/local/lib/python3.*/dist-packages/mavsdk*
-```
-
-**Importante:** inspecciona manualmente las rutas antes de `rm -rf` para no borrar paquetes no relacionados.  
-
----
-
-### 3. Reinstalación limpia en un virtualenv (recomendado)
+## 1. Instalación limpia en un virtualenv (recomendado)
 En **Terminal A**:
 
 ```bash
@@ -33,7 +6,7 @@ En **Terminal A**:
 python3 -m venv ~/mavsdk-venv
 source ~/mavsdk-venv/bin/activate
 
-# actualizar pip y reinstalar
+# actualizar pip e instalar
 pip install --upgrade pip
 pip install mavsdk aioconsole
 ```
@@ -47,7 +20,7 @@ Si esto imprime un número (por ejemplo `3.15.3`), **tu instalación está perfe
 
 ---
 
-## ✅ 2. Confirmar que MAVSDK‑Python funciona realmente
+## 2. Confirmar que MAVSDK‑Python funciona realmente
 Ejecuta un script mínimo que solo importa MAVSDK:
 
 ```bash
@@ -61,7 +34,7 @@ Si imprime eso, **todo está bien**.
 
 ---
 
-## ⚠️ 3. ¿Quieres que verifiquemos que MAVSDK se comunica con PX4 SITL?  
+## 3. Verificar que MAVSDK se comunica con PX4 SITL 
 Antes de avanzar a misiones, OFFBOARD y MAVLink, debemos confirmar que:
 
 1. PX4 SITL está enviando MAVLink por UDP 14540  
@@ -96,10 +69,7 @@ EOF
 ```
 
 Si aparece **PX4 conectado correctamente**, ya estamos listos para misiones y OFFBOARD.
-Si **PX4 SITL ya está corriendo** y **MAVSDK‑Python ya se conectó**, entonces ya tenemos la base lista.  
-Ahora sí podemos entrar en lo que realmente querías: **misiones, OFFBOARD y MAVLink**, con explicaciones profundas y ejemplos ejecutables en tu entorno WSL2.
-
-Voy a empezar por **MISIÓN**, porque es el flujo más sencillo y te prepara para OFFBOARD y MAVLink RAW.
+Si **PX4 SITL ya está corriendo** y **MAVSDK‑Python ya se conectó**, entonces ya tenemos la base lista.
 
 ---
 
@@ -119,7 +89,7 @@ MAVSDK te permite **crear, subir y ejecutar** misiones sin tocar QGroundControl.
 
 ---
 
-# ✅ PASO 1 — Crear archivo de misión
+## 1. Crear archivo de misión
 
 En **Terminal A (WSL2, con tu venv activado)**:
 
@@ -192,7 +162,7 @@ Guarda con **CTRL+O**, Enter, y sal con **CTRL+X**.
 
 ---
 
-# ✅ PASO 2 — Ejecutar la misión
+## 2. Ejecutar la misión
 
 En **Terminal A (WSL2, venv activado)**:
 
@@ -211,7 +181,7 @@ Y en **Gazebo** verás el dron despegar y seguir los waypoints.
 
 ---
 
-# 🧩 ¿Qué aprendiste aquí?
+# ¿Qué aprendiste aquí?
 - Cómo crear MissionItems  
 - Cómo subir MissionPlan  
 - Cómo iniciar misión  
@@ -220,24 +190,23 @@ Y en **Gazebo** verás el dron despegar y seguir los waypoints.
 
 ---
 
-# 🚀 PARTE 2 — CONTROL OFFBOARD  
-*(Aquí empieza lo interesante)*
+# PARTE 2 — CONTROL OFFBOARD  
 
-## 🧠 Concepto profundo: ¿Qué es OFFBOARD?
+## ¿Qué es OFFBOARD?
 OFFBOARD = **control directo por comandos MAVLink enviados desde tu script**.
 
 PX4 exige:
 
-### 🔥 **Un flujo continuo de setpoints (≥ 2 Hz)**  
+### **Un flujo continuo de setpoints (≥ 2 Hz)**  
 Si dejas de enviar setpoints → PX4 **sale de OFFBOARD automáticamente** por seguridad.
 
-### 🔥 **Un setpoint válido ANTES de activar OFFBOARD**
+### **Un setpoint válido ANTES de activar OFFBOARD**
 Si intentas activar OFFBOARD sin haber enviado setpoints →  
 PX4 responde **COMMAND_DENIED**.
 
 ---
 
-# 🧪 Ejemplo OFFBOARD mínimo (posición)
+# Ejemplo OFFBOARD mínimo (posición)
 
 En **Terminal A**:
 
