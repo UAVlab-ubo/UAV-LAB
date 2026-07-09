@@ -3,7 +3,7 @@
 
 ---
 
-# PARTE 1 — INSTALAR MAVSDK-PYTHON PARA CONTROLAR DRON
+# 1. Instalar MAVSDK-Python para controlar dron
 
 ---
 **Prerrequisitos**
@@ -93,7 +93,7 @@ Si **PX4 SITL ya está corriendo** y **MAVSDK‑Python ya se conectó**, entonce
 
 ---
 
-# PARTE 2 — ESCRIBIR MISIONES CON MAVSDK‑PYTHON 
+# 2. Escribir misiones con MAVSDK-Python
 
 ---
 
@@ -291,7 +291,7 @@ Y en **Gazebo** verás el dron despegar y seguir los waypoints.
 
 ---
 
-# PARTE 3 — CONTROL OFFBOARD  
+# 3. Control OFFBOARD
 
 ## ¿Qué es OFFBOARD?
 OFFBOARD = **control directo por comandos MAVLink enviados desde tu script**.
