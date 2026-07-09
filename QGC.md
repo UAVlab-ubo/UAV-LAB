@@ -1,4 +1,4 @@
-> 07-05-2026 | 28-05-2026
+> 07-05-2026 || 28-05-2026
 
 **QGroundControl es un software de Estación Control Terrestre de código abierto, está diseñado para configurar, gestionar y pilotar drones autónomos o manuales.**
 
