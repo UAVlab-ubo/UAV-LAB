@@ -1,3 +1,18 @@
+> 02-07-2026
+
+# Instalar MAVSDK-Python para controlar dron
+## Prerrequisitos
+- **Python 3.6+:**
+  Si no sabes la versión de python:
+  ```
+  python --version
+  ```
+  o
+  ```
+  python3 --version
+  ```
+- Una instancia de SITL en ejecución (en este caso gazebo 6.18)
+
 ## 1. Instalación limpia en un virtualenv (recomendado)
 En **Terminal A**:
 
@@ -262,7 +277,7 @@ Y en **Gazebo** verás el dron despegar y seguir los waypoints.
 
 ---
 
-# ¿Qué aprendiste aquí?
+## ¿Qué aprendiste aquí?
 - Cómo crear MissionItems  
 - Cómo subir MissionPlan  
 - Cómo iniciar misión  
@@ -415,7 +430,7 @@ python offboard_demo.py
 
 ---
 
-# 🧠 ¿Qué aprendiste aquí?
+## ¿Qué aprendiste aquí?
 - Por qué OFFBOARD exige flujo continuo  
 - Cómo enviar setpoints  
 - Cómo activar OFFBOARD correctamente  
@@ -423,10 +438,10 @@ python offboard_demo.py
 
 ---
 
-# 🚀 PARTE 3 — MODELO MAVLINK  
+# PARTE 3 — MODELO MAVLINK  
 *(Heartbeat, COMMAND_LONG, ACK, request/ack)*
 
-## ❤️ Heartbeat
+## Heartbeat
 PX4 envía un heartbeat MAVLink cada 1 Hz.  
 MAVSDK lo interpreta automáticamente → por eso `connection_state.is_connected` funciona.
 
