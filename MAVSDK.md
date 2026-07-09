@@ -18,7 +18,7 @@
   ```
 - Una instancia de SITL en ejecución (en este caso gazebo 6.18)
 
-## 1. Instalación limpia en un virtualenv (recomendado)
+## Instalación limpia en un virtualenv (recomendado)
 En **Terminal A**:
 
 ```bash
@@ -40,7 +40,7 @@ Si esto imprime un número (por ejemplo `3.15.3`), **tu instalación está perfe
 
 ---
 
-## 2. Confirmar que MAVSDK‑Python funciona realmente
+## Confirmar que MAVSDK‑Python funciona realmente
 Ejecuta un script mínimo que solo importa MAVSDK:
 
 ```bash
@@ -54,7 +54,7 @@ Si imprime eso, **todo está bien**.
 
 ---
 
-## 3. Verificar que MAVSDK se comunica con PX4 SITL 
+## Verificar que MAVSDK se comunica con PX4 SITL 
 Antes de avanzar a misiones, OFFBOARD y MAVLink, debemos confirmar que:
 
 1. PX4 SITL está enviando MAVLink por UDP 14540  
@@ -109,7 +109,7 @@ MAVSDK te permite **crear, subir y ejecutar** misiones sin tocar QGroundControl.
 
 ---
 
-## 1. Crear archivo de misión
+## Crear archivo de misión
 
 En **Terminal A (WSL2, con tu venv activado)**:
 
@@ -263,7 +263,7 @@ Guarda con **CTRL+O**, Enter, y sal con **CTRL+X**.
 
 ---
 
-## 2. Ejecutar la misión
+## Ejecutar la misión
 
 En **Terminal A (WSL2, venv activado)**:
 
