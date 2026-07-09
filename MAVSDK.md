@@ -1,13 +1,20 @@
 > 02-07-2026
 
-# Instalar MAVSDK-Python para controlar dron
-## Prerrequisitos
+> 09-07-2026
+# Crear misión con MAVSDK
+
+---
+
+# PARTE 1 — INSTALAR MAVSDK-PYTHON PARA CONTROLAR DRON
+
+---
+**Prerrequisitos**
 - **Python 3.6+:**
   Si no sabes la versión de python:
   ```
   python --version
   ```
-  o
+  o usa:
   ```
   python3 --version
   ```
@@ -88,7 +95,7 @@ Si **PX4 SITL ya está corriendo** y **MAVSDK‑Python ya se conectó**, entonce
 
 ---
 
-# PARTE 1 — ESCRIBIR MISIONES CON MAVSDK‑PYTHON 
+# PARTE 2 — ESCRIBIR MISIONES CON MAVSDK‑PYTHON 
 
 ---
 
@@ -286,7 +293,7 @@ Y en **Gazebo** verás el dron despegar y seguir los waypoints.
 
 ---
 
-# PARTE 2 — CONTROL OFFBOARD  
+# PARTE 3 — CONTROL OFFBOARD  
 
 ## ¿Qué es OFFBOARD?
 OFFBOARD = **control directo por comandos MAVLink enviados desde tu script**.
@@ -438,35 +445,184 @@ python offboard_demo.py
 
 ---
 
+# Modelo MAVLink
 
+Este bloque explica cómo funciona MAVLink internamente, cómo PX4 interpreta los mensajes enviados por MAVSDK, y por qué ciertos modos como OFFBOARD y AUTO.MISSION requieren secuencias específicas. Es el fundamento para desarrollar software de vuelo autónomo.
 
+---
 
+## 1. ¿Qué es MAVLink?
 
+MAVLink es un protocolo de mensajería binario utilizado por autopilotos como PX4 para intercambiar información con estaciones terrestres, simuladores y controladores externos.  
+Cada mensaje MAVLink contiene:
 
+- Identificador del mensaje  
+- Payload con datos específicos  
+- Identificador del sistema (system_id)  
+- Identificador del componente (component_id)  
+- Checksum  
 
+PX4 utiliza MAVLink para:
 
+- Enviar telemetría  
+- Recibir comandos de vuelo  
+- Ejecutar misiones  
+- Recibir setpoints externos (modo OFFBOARD)  
+- Comunicar estado del sistema  
 
+MAVSDK es una capa de alto nivel que abstrae el envío y recepción de mensajes MAVLink.
 
+---
 
+## 2. Heartbeat
 
+PX4 envía un mensaje HEARTBEAT cada 1 Hz.  
+Este mensaje indica:
 
+- Tipo de vehículo  
+- Autopiloto (PX4)  
+- Modo de vuelo actual  
+- Estado del sistema  
 
+MAVSDK detecta el heartbeat y reporta la conexión mediante:
 
+```python
+state.is_connected
+```
 
+Si el heartbeat se detiene, PX4 reporta pérdida de enlace con la estación terrestre.  
+El heartbeat es fundamental para que MAVSDK sepa que PX4 está activo y disponible.
 
+---
 
+## 3. COMMAND_LONG y COMMAND_ACK
 
+Las acciones de alto nivel enviadas desde MAVSDK se traducen en mensajes MAVLink del tipo COMMAND_LONG.  
+Ejemplos:
 
+| Acción MAVSDK | Comando MAVLink |
+|---------------|------------------|
+| arm() | MAV_CMD_COMPONENT_ARM_DISARM |
+| takeoff() | MAV_CMD_NAV_TAKEOFF |
+| land() | MAV_CMD_NAV_LAND |
+| start_mission() | MAV_CMD_MISSION_START |
+| offboard.start() | MAV_CMD_DO_SET_MODE (OFFBOARD) |
 
+Cada COMMAND_LONG debe recibir una respuesta COMMAND_ACK desde PX4.  
+El ACK contiene:
 
+- El comando original  
+- Resultado (ACEPTADO, DENEGADO, FALLIDO, NO SOPORTADO)  
 
+MAVSDK interpreta el ACK y lo expone como excepciones o resultados Python.
 
+---
 
+## 4. Ciclo de misión RAW (request/ack)
 
+Las misiones RAW siguen el protocolo MAVLink puro.  
+La secuencia completa es:
 
+1. MAVSDK envía `MISSION_COUNT` indicando cuántos items tiene la misión.  
+2. PX4 solicita el primer item con `MISSION_REQUEST_INT(seq=0)`.  
+3. MAVSDK envía `MISSION_ITEM_INT(seq=0)`.  
+4. PX4 solicita el siguiente item con `MISSION_REQUEST_INT(seq=1)`.  
+5. MAVSDK envía `MISSION_ITEM_INT(seq=1)`.  
+6. El proceso continúa hasta completar todos los items.  
+7. PX4 envía `MISSION_ACK` indicando que la misión fue cargada correctamente.
 
+Si esta secuencia se interrumpe, la misión no se carga y PX4 no la ejecutará.
 
+---
 
+## 5. OFFBOARD a nivel MAVLink
+
+OFFBOARD es el modo donde PX4 recibe comandos externos de control.  
+Estos comandos se envían como mensajes MAVLink de setpoints:
+
+- SET_POSITION_TARGET_LOCAL_NED  
+- SET_VELOCITY_NED  
+- SET_ATTITUDE_TARGET  
+- SET_ACTUATOR_CONTROL_TARGET  
+
+### Requisitos del modo OFFBOARD
+
+1. **Debe enviarse al menos un setpoint antes de activar OFFBOARD.**  
+   Si no se envía un setpoint previo, PX4 responde con COMMAND_DENIED.
+
+2. **Debe mantenerse un flujo continuo de setpoints.**  
+   PX4 exige una frecuencia mínima de 2 Hz, idealmente entre 20 y 50 Hz.
+
+3. **Si el flujo se detiene por más de 0.5 segundos, PX4 abandona OFFBOARD.**  
+   El autopiloto cambia automáticamente a HOLD por seguridad.
+
+OFFBOARD no es un modo persistente.  
+Es un modo dependiente del flujo de comandos externos.
+
+---
+
+## 6. Diagramas de flujo MAVLink
+
+### 6.1 Flujo de misión RAW
+
+```
+MAVSDK → MISSION_COUNT
+PX4 → MISSION_REQUEST_INT(seq=0)
+MAVSDK → MISSION_ITEM_INT(seq=0)
+PX4 → MISSION_REQUEST_INT(seq=1)
+MAVSDK → MISSION_ITEM_INT(seq=1)
+...
+PX4 → MISSION_ACK
+PX4 → Cambio a AUTO.MISSION
+PX4 → Ejecución de waypoints
+```
+
+---
+
+### 6.2 Flujo OFFBOARD
+
+```
+MAVSDK → SET_POSITION_TARGET_LOCAL_NED (primer setpoint)
+MAVSDK → COMMAND_LONG (SET_MODE: OFFBOARD)
+PX4 → COMMAND_ACK (ACCEPTED)
+MAVSDK → SET_POSITION_TARGET_LOCAL_NED (20–50 Hz)
+PX4 → Control externo activo
+```
+
+Si el flujo se detiene:
+
+```
+PX4 → Offboard lost → HOLD
+```
+
+---
+
+### 6.3 Flujo de armado y despegue
+
+```
+MAVSDK → COMMAND_LONG (ARM)
+PX4 → COMMAND_ACK (ACCEPTED)
+MAVSDK → COMMAND_LONG (NAV_TAKEOFF)
+PX4 → COMMAND_ACK (ACCEPTED)
+PX4 → Takeoff detected
+```
+
+---
+
+## 7. Buenas prácticas MAVSDK/PX4
+
+1. No activar OFFBOARD sin enviar un setpoint previo.  
+2. No detener el flujo de setpoints durante OFFBOARD.  
+3. No mezclar misión RAW con OFFBOARD sin cambiar explícitamente de modo.  
+4. Convertir latitud y longitud a enteros multiplicados por 1e7 en misiones RAW.  
+5. Comprender el sistema de coordenadas NED (North-East-Down) para OFFBOARD.  
+6. No activar OFFBOARD si PX4 reporta errores del EKF2.  
+7. Siempre esperar el ACK de cada COMMAND_LONG.  
+8. En simulación, desactivar chequeos EKF2 si bloquean el armado.  
+9. Mantener frecuencias de envío de setpoints entre 20 y 50 Hz para control estable.  
+10. No asumir que PX4 ejecutará una misión si no se ha armado y despegado correctamente.
+
+---
 
 
 
