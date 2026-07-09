@@ -1,4 +1,5 @@
 > 26-06-2026
+
 **Instalación recomendada y reproducible de YOLOv8 en WSL2 Ubuntu 22.04 usando conda/mamba y PyTorch con CUDA 11.8.** Sigue los pasos en orden, acepta los Terms of Service de conda cuando se solicite, y usa siempre `conda activate yolov8` y `python -m pip` dentro del entorno para evitar conflictos.
 
 # Requisitos previos
