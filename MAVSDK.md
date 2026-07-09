@@ -622,5 +622,180 @@ PX4 → Takeoff detected
 
 ---
 
+## Hacer misión con 4 waypoints y regreso al punto de inicio:
 
+```bash
+nano mission_one.py
+```
+Pega:
+
+```python
+#!/usr/bin/env python3
+
+import asyncio
+from mavsdk import System
+from mavsdk.mission import MissionItem, MissionPlan
+from mavsdk.action import ActionError
+from mavsdk.telemetry import LandedState
+
+async def wait_until_landed(drone):
+    async for ls in drone.telemetry.landed_state():
+        if ls == LandedState.ON_GROUND:
+            print("PX4 reporta ON_GROUND")
+            return
+
+async def run():
+    drone = System()
+    await drone.connect(system_address="udpin://0.0.0.0:14540")
+
+    print("Esperando conexión...")
+    async for state in drone.core.connection_state():
+        if state.is_connected:
+            print("Dron conectado!")
+            break
+
+    print("Esperando health flags...")
+    async for health in drone.telemetry.health():
+        if health.is_home_position_ok and health.is_local_position_ok:
+            print("PX4 listo para armar")
+            break
+
+    # ----------------------------------------------------
+    # LIMPIAR ESTADO LAND → PX4 necesita HOLD antes de armar
+    # ----------------------------------------------------
+    print("Forzando HOLD para limpiar estado LAND...")
+    try:
+        await drone.action.hold()
+        await asyncio.sleep(1)
+        print("HOLD activado correctamente")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
+
+    # ----------------------------------------------------
+    # ARMAR
+    # ----------------------------------------------------
+    async for armed in drone.telemetry.armed():
+        already_armed = armed
+        print(f"Estado armado inicial: {armed}")
+        break
+
+    if not already_armed:
+        print("Armando...")
+        try:
+            await drone.action.arm()
+            print("Armado correcto")
+        except ActionError as e:
+            print(f"ARM falló: {e}")
+            return
+    else:
+        print("PX4 ya estaba armado")
+
+    # ----------------------------------------------------
+    # OBTENER HOME POSITION
+    # ----------------------------------------------------
+    async for pos in drone.telemetry.position():
+        home_lat = pos.latitude_deg
+        home_lon = pos.longitude_deg
+        home_alt = pos.absolute_altitude_m
+        break
+
+    print(f"Home: lat={home_lat}, lon={home_lon}, alt={home_alt}")
+
+    # ----------------------------------------------------
+    # DEFINIR MISIÓN (14 parámetros)
+    # ----------------------------------------------------
+    def wp(lat, lon, alt):
+        return MissionItem(
+            lat, lon, alt,
+            5,                  # speed
+            True,               # fly-through
+            float('nan'),       # gimbal pitch
+            float('nan'),       # gimbal yaw
+            MissionItem.CameraAction.NONE,
+            0,                  # loiter time
+            2.0,                # acceptance radius
+            float('nan'),       # yaw
+            0,                  # camera photo distance
+            0,                  # camera photo interval
+            MissionItem.VehicleAction.NONE
+        )
+
+    mission_items = []
+
+    # 1) Despegue a 10 m
+    mission_items.append(wp(home_lat, home_lon, home_alt + 10))
+
+    # 2) Punto 1 (más lejos en latitud)
+    mission_items.append(wp(home_lat + 0.00010, home_lon, home_alt + 10))
+
+    # 3) Punto 2 (más lejos en longitud)
+    mission_items.append(wp(home_lat + 0.00010, home_lon + 0.00015, home_alt + 10))
+
+    # 4) Punto 3 (diagonal opuesta)
+    mission_items.append(wp(home_lat, home_lon + 0.00015, home_alt + 10))
+
+    # 5) Punto 4 (otro punto más lejos)
+    mission_items.append(wp(home_lat - 0.00010, home_lon + 0.00005, home_alt + 10))
+
+    # 6) Regreso al home
+    mission_items.append(wp(home_lat, home_lon, home_alt + 10))
+
+    mission_plan = MissionPlan(mission_items)
+
+    print("Subiendo misión...")
+    await drone.mission.set_return_to_launch_after_mission(True)
+    await drone.mission.upload_mission(mission_plan)
+
+    # ----------------------------------------------------
+    # INICIAR MISIÓN
+    # ----------------------------------------------------
+    print("Iniciando misión...")
+    await drone.mission.start_mission()
+
+    async for mission_progress in drone.mission.mission_progress():
+        print(f"Progreso: {mission_progress.current}/{mission_progress.total}")
+        if mission_progress.current == mission_progress.total:
+            print("Misión completada!")
+            break
+
+    # ----------------------------------------------------
+    # ATERRIZAR
+    # ----------------------------------------------------
+    print("Aterrizando...")
+    await drone.action.land()
+
+    await wait_until_landed(drone)
+
+    # ----------------------------------------------------
+    # DESARMAR
+    # ----------------------------------------------------
+    print("Desarmando...")
+    try:
+        await drone.action.disarm()
+        print("Desarmado correctamente")
+    except ActionError as e:
+        print(f"Error al desarmar: {e}")
+
+    # ----------------------------------------------------
+    # VOLVER A HOLD
+    # ----------------------------------------------------
+    print("Volviendo a HOLD...")
+    try:
+        await drone.action.hold()
+        print("HOLD activado")
+    except Exception as e:
+        print(f"No se pudo activar HOLD: {e}")
+
+    print("Script finalizado sin errores.")
+
+if __name__ == "__main__":
+    asyncio.run(run())
+
+```
+
+Ejecuta:
+
+```bash
+python mission_one.py
+```
 
