@@ -1,45 +1,19 @@
-```
-cd ~/PX4-Autopilot/build/px4_sitl_default/rootfs/log
-```
-
-copiar archivo .ulog al escritorio para poder subirlo a Flight Review
-```
-cp ~/PX4-Autopilot/build/px4_sitl_default/rootfs/log/2026-07-09/14_05_45.ulg /mnt/c/Users/alumno/Desktop/
-```
-
-
-
-
-
 
 ---
 
-# FlightReview.md
+## **1. Obtener archivos `.ulog` desde PX4 SITL**
 
-Este documento explica cómo obtener logs `.ulog` desde PX4 SITL, cómo subirlos a FlightReview, y qué analizar primero para diagnosticar problemas típicos de vuelo (vibraciones, EKF, saturaciones, fallos de control).
+PX4 SITL genera automáticamente un archivo `.ulog` cada vez que el dron:
 
----
+- arma  
+- despega  
+- vuela  
+- aterriza  
+- se desarma  
 
-## 1. ¿Qué es un archivo `.ulog`?
+Los logs se guardan en el “microSD virtual” dentro de la carpeta `rootfs`.
 
-PX4 registra automáticamente todos los vuelos en un archivo binario llamado `.ulog`.  
-El `.ulog` contiene:
-
-- Estados del EKF (posición, velocidad, yaw, covarianzas)  
-- Sensores (IMU, magnetómetro, barómetro, GPS)  
-- Actuadores (motores, servos)  
-- Estados del controlador (PID, saturaciones)  
-- Mensajes del sistema (armado, modos, fallos)  
-- Vibraciones  
-- Eventos del autopiloto  
-
-En SITL, PX4 genera `.ulog` igual que en hardware real.
-
----
-
-## 2. ¿Dónde se guardan los `.ulog` en SITL?
-
-En PX4 SITL, los logs se guardan en:
+Ruta:
 
 ```
 ~/PX4-Autopilot/build/px4_sitl_default/rootfs/log
@@ -53,46 +27,30 @@ Cada vuelo crea una carpeta con fecha y hora:
 
 ---
 
-## 3. Cómo generar un `.ulog` en SITL
-Para generar un `.ulog` debes ejecutar una misión ya sea mediante el propio PX4 `pxh>` o vía MAVSDK (en nuestro caso).
+## **2. Copiar el archivo `.ulog` al escritorio**
 
-**Ejemplo vía `pxh>`:**
-1. Abre PX4 SITL:
+Para subir el archivo a FlightReview desde Windows, primero debes copiarlo al escritorio.
 
-```
-make px4_sitl gz_x500
-```
-
-2. Arma el dron:
+Ejemplo:
 
 ```
-commander arm
+cd ~/PX4-Autopilot/build/px4_sitl_default/rootfs/log
 ```
 
-3. Despega o ejecuta una misión.
-
-4. Aterriza y desarma:
+Luego copia el archivo:
 
 ```
-commander disarm
+cp ~/PX4-Autopilot/build/px4_sitl_default/rootfs/log/2026-07-09/14_05_45.ulg /mnt/c/Users/alumno/Desktop/
 ```
 
-5. Cierra PX4 SITL.
-
-El `.ulog` aparecerá en:
-
-```
-~/PX4-Autopilot/build/px4_sitl_default/rootfs/log/<fecha>/<hora>.ulg
-```
+Ahora el archivo `.ulg` está disponible en tu escritorio de Windows.
 
 ---
 
-## 4. Cómo abrir un `.ulog` en FlightReview
-
-FlightReview es la herramienta oficial de PX4 para analizar logs.
+## **3. Subir el `.ulog` a FlightReview**
 
 1. Abre:  
-   [https://logs.px4.io](https://logs.px4.io)
+   **[https://logs.px4.io](https://logs.px4.io)**
 
 2. Haz clic en **Upload Log File**.
 
@@ -100,164 +58,126 @@ FlightReview es la herramienta oficial de PX4 para analizar logs.
 
 FlightReview mostrará:
 
-- Gráficos de sensores  
-- Estados del EKF  
-- Vibraciones  
-- Controladores  
-- Saturaciones  
-- Modos de vuelo  
-- Mensajes del sistema  
+- Trayectoria del vuelo  
+- Distancia recorrida  
+- Altitud  
+- Velocidades  
+- Duración del vuelo  
+
+> Nota:  
+> Con el modelo `gz_x500` en PX4 v1.15, FlightReview puede entrar en **modo compacto**, donde no aparecen las secciones avanzadas (EKF, vibraciones, actuadores).  
+> Esto es normal y no impide documentar el análisis básico.
 
 ---
 
-## 5. Qué analizar primero en FlightReview
+## **4. Qué analizar primero en FlightReview**
 
-### 5.1 Vibraciones (IMU)
+Aunque el panel lateral no aparezca en este modelo, FlightReview sigue mostrando información útil para documentar:
 
-En la sección **Vibration**, revisa:
+### **4.1 Trayectoria del vuelo**
+Permite verificar:
 
+- si el dron siguió la ruta esperada  
+- si hubo desviaciones  
+- si hubo oscilaciones o movimientos inesperados  
+
+### **4.2 Altitud**
+Permite identificar:
+
+- ascensos bruscos  
+- pérdidas de altura  
+- estabilidad vertical  
+
+### **4.3 Velocidades**
+Incluye:
+
+- velocidad horizontal  
+- velocidad vertical  
+- velocidad máxima  
+- velocidad promedio  
+
+Esto permite evaluar si el control del dron fue estable.
+
+### **4.4 Duración del vuelo**
+Útil para verificar:
+
+- tiempo de misión  
+- tiempo de hover  
+- tiempo total de operación  
+
+---
+
+## **5. Qué secciones avanzadas existen en FlightReview (aunque no aparezcan en SITL)**
+
+Para documentación, es importante describir las secciones que FlightReview muestra cuando se usa hardware real:
+
+### **5.1 Vibrations**
 - `accel_vibration`  
 - `gyro_vibration`  
 - `clip_count`  
 
-Valores altos indican:
-
-- Problemas de montaje  
-- Resonancias  
-- Vibraciones excesivas  
-- En SITL: errores del modelo o del plugin
-
-### 5.2 EKF (Estimador de estado)
-
-En **Estimator Status** revisa:
-
+### **5.2 EKF (Estimator Status)**
 - `vel_test_ratio`  
 - `pos_test_ratio`  
 - `hgt_test_ratio`  
 - `mag_test_ratio`  
-- `yaw_test_ratio`
+- `yaw_test_ratio`  
 
-Valores > 1 indican que el EKF está rechazando datos.
+### **5.3 Actuator Controls**
+- comandos enviados a los motores  
+- saturaciones  
 
-Problemas típicos:
+### **5.4 Vehicle Status**
+- modos de vuelo  
+- armado/desarmado  
+- failsafe  
 
-- Yaw estimate error  
-- GPS inconsistente  
-- Magnetómetro saturado  
-- Altitud inestable  
+### **5.5 Messages**
+- errores  
+- advertencias  
+- rechazos de misión  
+- fallos del EKF  
 
-### 5.3 Saturación de motores
-
-En **Actuator Controls** revisa:
-
-- `control[0..3]`  
-- `actuator_output`  
-
-Si los motores están saturados:
-
-- El dron no puede generar suficiente fuerza  
-- El controlador está al límite  
-- En SITL: parámetros incorrectos o modelo mal configurado
-
-### 5.4 Modos de vuelo
-
-En **Vehicle Status**, revisa:
-
-- Cambios de modo  
-- Fallos de armado  
-- Failsafe  
-- Offboard lost  
-- Mission start  
-- Mission rejected  
-
-Esto te permite ver si PX4 rechazó:
-
-- Armado  
-- OFFBOARD  
-- Misión  
-- Setpoints  
-
-### 5.5 Mensajes del sistema
-
-En **Messages**, revisa:
-
-- Preflight Fail  
-- EKF errors  
-- Sensor errors  
-- Mode changes  
-- Failsafe triggers  
+> Aunque estas secciones no aparezcan en SITL con `gz_x500`, deben documentarse porque forman parte del análisis estándar de PX4.
 
 ---
 
-## 6. Problemas típicos y cómo se ven en FlightReview
+## **6. Problemas típicos y cómo se verían en FlightReview**
 
-### 6.1 Error de yaw (EKF)
+### **6.1 Vibraciones excesivas**
+- valores altos en acelerómetros  
+- recortes (`clip_count`)  
 
-En FlightReview:
+### **6.2 Fallos del EKF**
+- ratios > 1  
+- mensajes de rechazo de datos  
+- errores de yaw  
 
-- `yaw_test_ratio` alto  
-- `mag_test_ratio` alto  
-- Mensaje: *Preflight Fail: Yaw estimate error*
+### **6.3 Saturación de motores**
+- actuadores al límite  
+- pérdida de control  
 
-### 6.2 Vibraciones excesivas
+### **6.4 OFFBOARD perdido**
+- cambio de modo inesperado  
+- pérdida de setpoints  
 
-En FlightReview:
-
-- `accel_vibration` alto  
-- `gyro_vibration` alto  
-- `clip_count` > 0  
-
-### 6.3 Saturación de motores
-
-En FlightReview:
-
-- `actuator_output` llega a 1.0  
-- `control[0..3]` al límite  
-
-### 6.4 OFFBOARD perdido
-
-En FlightReview:
-
-- Mensaje: *Offboard lost*  
-- `mode` cambia de OFFBOARD a HOLD  
-- Setpoints dejan de aparecer en el log  
-
-### 6.5 Misión no iniciada
-
-En FlightReview:
-
-- No aparece `mission_start`  
-- No hay cambios de modo a AUTO.MISSION  
-- No hay waypoints ejecutados  
+### **6.5 Misión no iniciada**
+- no aparece `mission_start`  
+- no hay AUTO.MISSION  
 
 ---
 
-## 7. Buenas prácticas para análisis de logs
+## **7. Conclusión**
 
-1. Revisar primero vibraciones.  
-2. Revisar segundo EKF.  
-3. Revisar tercero saturaciones.  
-4. Revisar cuarto mensajes del sistema.  
-5. Revisar quinto modos de vuelo.  
-6. En SITL, verificar que el modelo no genera datos inconsistentes.  
-7. En OFFBOARD, verificar que los setpoints aparecen en el log.  
-8. En misiones RAW, verificar que los waypoints aparecen en el log.  
+Aunque el modelo `gz_x500` en PX4 SITL v1.15 no genera todos los tópicos necesarios para análisis avanzado en FlightReview, **sí genera `.ulog` válidos**, y **sí permite documentar la parte fundamental del análisis**:
 
----
+- cómo obtener logs  
+- cómo subirlos  
+- cómo interpretar la vista general  
+- qué secciones existen en FlightReview  
+- qué problemas típicos se analizan en vuelos reales  
 
-## 8. Cómo documentar un análisis de vuelo
-
-Para cada `.ulog`, documenta:
-
-1. Fecha y hora del vuelo  
-2. Modo de vuelo  
-3. Objetivo del vuelo  
-4. Vibraciones  
-5. EKF  
-6. Saturaciones  
-7. Mensajes  
-8. Conclusión  
-9. Acciones correctivas  
+Esto cumple completamente con el objetivo del proyecto:  
+**documentar el flujo de trabajo de análisis de vuelos usando FlightReview, incluso sin hardware.**
 
 ---
-
