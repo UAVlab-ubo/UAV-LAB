@@ -444,18 +444,7 @@ Parámetros clave:
 
 ---
 
-# 21. Recursos
-
-- docs.px4.io  
-- discord.gg/dronecode  
-- discuss.px4.io  
-- YouTube PX4 Autopilot  
-- Embebidos32  
-- github.com/PX4/PX4-Autopilot
-
----
-
-# 22. Estimaciones de tiempo
+# 21. Estimaciones de tiempo
 
 - Vuelo simulado: 8–10 horas.  
 - Primer vuelo real: 2–4 semanas.  
