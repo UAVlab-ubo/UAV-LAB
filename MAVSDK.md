@@ -21,7 +21,7 @@
 ## Instalación limpia en un virtualenv (recomendado)
 En **Terminal A**:
 
-```bash
+```c bash
 # crear y activar venv
 python3 -m venv ~/mavsdk-venv
 source ~/mavsdk-venv/bin/activate
@@ -68,7 +68,7 @@ make px4_sitl gz_x500
 
 Y en **Terminal A (venv activado)**:
 
-```bash
+```c bash
 python - << 'EOF'
 import asyncio
 from mavsdk import System
@@ -119,7 +119,7 @@ nano mission_raw_auto.py
 ```
 
 Pega este código completo, ya adaptado para SITL y Gazebo:
-```
+```c 
 #!/usr/bin/env python3
 import asyncio
 from mavsdk import System
