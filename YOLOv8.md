@@ -131,16 +131,6 @@ while cap.isOpened():
 cap.release()
 cv2.destroyAllWindows()
 ```
-------------------------------
 
-[1] [https://medium.com](https://medium.com/@enriqueav/detecci%C3%B3n-de-objetos-con-yolo-implementaciones-y-como-usarlas-c73ca2489246)
-[3] [https://docs.ultralytics.com](https://docs.ultralytics.com/es/compare/yolov10-vs-yolox)
-[4] [https://www.ultralytics.com](https://www.ultralytics.com/es/blog/run-an-interactive-ai-app-with-streamlit-and-ultralytics-yolo11)
-[7] [https://www.basic.ai](https://www.basic.ai/blog-post/data-annotation-for-yolo-model-training-techniques-and-best-practices)
-[8] [https://docs.ultralytics.com](https://docs.ultralytics.com/es/guides/model-training-tips)
-[9] [https://www.unite.ai](https://www.unite.ai/es/ultralytics-yolov8-explained/)
-
-https://www.youtube.com/watch?v=cloTBo0oYSc
-https://www.youtube.com/watch?v=_ekUN7A1EmQ
-https://docs.ultralytics.com/quickstart#use-ultralytics-with-python
+---
 https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/train-yolov8-object-detection-on-custom-dataset.ipynb
