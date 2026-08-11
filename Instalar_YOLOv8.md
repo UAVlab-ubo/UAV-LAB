@@ -1,472 +1,117 @@
-> 26-06-2026
+> 11-08-2026
+---
 
-**Instalación de YOLOv8 en WSL2 Ubuntu 22.04 usando conda/mamba y PyTorch con CUDA 11.8.**
-# Requisitos previos
-- **Windows 11 con WSL2** y **Ubuntu 22.04** instalado.  
-- **GPU NVIDIA** con drivers WSL compatibles (ver `nvidia-smi`).  
-- **Conexión a Internet** para descargar paquetes y pesos.
+# Instalación de YOLOv8 en WSL2 (Ubuntu)  
+Guía paso a paso con comandos listos para copiar y pegar
+
+Esta guía describe el procedimiento completo para instalar Python, configurar un entorno virtual, instalar PyTorch y Ultralytics YOLOv8, y ejecutar pruebas de inferencia en imágenes dentro de WSL2.
 
 ---
 
-# Preparación del sistema y drivers
-1. En Windows instala/actualiza el driver NVIDIA para WSL (p. ej. 537+).  
-2. En WSL verifica:
-```c bash
-nvidia-smi
-```
-Si `nvidia-smi` funciona y muestra tu GPU, continúa. Para guía de instalación CUDA 11.8 en WSL2 sigue las instrucciones de referencia.   [Github](https://github.com/cherifsid/Setting-Up-CUDA-11.8-and-PyTorch-with-NVIDIA-537-Driver-on-WSL2/blob/main/README.md)
+## Paso 1: Actualización del sistema e instalación de Python
 
----
-
-# Instalar Miniconda y crear entorno
-```c bash
-# Descargar e instalar Miniconda (si no lo tienes)
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-bash ~/miniconda.sh -b -p $HOME/miniconda3
-export PATH="$HOME/miniconda3/bin:$PATH"
-conda init bash
-exec $SHELL
-
-# Crear entorno limpio
-conda create -n yolov8 python=3.10 -y
-conda activate yolov8
-```
-
----
-
-# Aceptar Terms of Service de conda (si se solicita)
-Si `conda` falla en modo no interactivo por TOS, acepta los canales oficiales:
-```c bash
-conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-```
-Esto es necesario para instalaciones no interactivas en sistemas recientes.
-
----
-
-# Instalar mamba y PyTorch binarios coherentes (recomendado)
-Usar `mamba` evita conflictos binarios y resuelve dependencias CUDA correctamente.
-```c bash
-# Instalar mamba en base (una sola vez)
-conda activate base
-conda install -n base -c conda-forge mamba -y
-
-# Volver al entorno y usar mamba para PyTorch
-conda activate yolov8
-mamba install -y -c pytorch -c conda-forge pytorch torchvision torchaudio pytz lxml
-```
-Instalar `torch`, `torchvision` y `torchaudio` juntos evita incompatibilidades entre versiones.   [docs.pytorch.org](https://docs.pytorch.org/get-started/previous-versions/)  [leapcell.io](https://leapcell.io/blog/how-to-install-pytorch-using-pip)
-
----
-
-# Alternativa pip para PyTorch (si no usas conda)
-Si prefieres `pip`, instala las tres ruedas juntas desde el índice oficial PyTorch (ej. CUDA 11.8):
-```c bash
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install --index-url https://download.pytorch.org/whl/cu118 \
-  torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
-```
-Verifica la versión y CUDA con `python -c "import torch; print(torch.__version__, torch.cuda.is_available())"`.   [leapcell.io](https://leapcell.io/blog/how-to-install-pytorch-using-pip)
-
----
-
-# Instalar Ultralytics YOLOv8 dentro del entorno
-```c bash
-# dentro de conda activate yolov8
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install ultralytics matplotlib psutil pyyaml requests
-```
-
----
-
-# Evitar scripts fuera del entorno y verificación final
-```c bash
-# eliminar scripts de usuario que interfieran
-rm -f ~/.local/bin/yolo 2>/dev/null || true
-hash -r
-
-# comprobar rutas y versiones
-which python
-which yolo
-python -c "import torch, ultralytics; print('torch', torch.__version__, 'CUDA', torch.cuda.is_available()); print('ultralytics', ultralytics.__version__)"
-```
-La salida debe mostrar `yolo` en `.../miniconda3/envs/yolov8/bin/yolo` y `torch` con `CUDA True`.
-
----
-
-# Prueba rápida de inferencia
-```c bash
-wget -q https://ultralytics.com/images/bus.jpg -O bus.jpg
-yolo detect predict model=yolov8n.pt source=bus.jpg
-ls -l runs/detect/predict
-```
-
----
-
-# Resolución de problemas comunes
-- **ModuleNotFoundError: No module named 'torch'** → asegúrate `conda activate yolov8` y reinstala con `python -m pip install --force-reinstall torch torchvision torchaudio` o usa `mamba` en el entorno.  
-- **Conflictos de versiones** → desinstala `torch/torchvision/torchaudio` y reinstala las tres juntas.   [docs.pytorch.org](https://docs.pytorch.org/get-started/previous-versions/)  [leapcell.io](https://leapcell.io/blog/how-to-install-pytorch-using-pip)  
-- **Scripts en `~/.local/bin`** → elimínalos para evitar que se ejecuten fuera del entorno.
-
----
-
-# Instalación Correcta de ROS 2 Humble en WSL2 + Validación con `ros2 topic list`
-
-Este documento describe el proceso completo para:
-
-- Instalar ROS 2 Humble correctamente en WSL2 (Ubuntu 22.04)  
-- Detectar y corregir los problemas más comunes que impiden que ROS2 funcione  
-- Reparar el daemon de ROS2  
-- Validar la instalación con `ros2 topic list`  
-- Continuar con la configuración posterior a ROS2  
-
-Incluye también la solución a un problema real:  
-**ROS2 Humble no funcionaba porque Conda interfería con Python, incluso cuando no estaba activado visualmente.**
-
----
-
-# 1. Requisitos previos
-
-Antes de instalar ROS 2 Humble, asegúrate de:
-
-- Usar **WSL2** (no WSL1)
-- Tener **Ubuntu 22.04**
-- No ejecutar ROS2 desde rutas de Windows (`/mnt/c/...`)
-- No tener **Conda** activo (rompe ROS2)
-
-Verificar ubicación:
-
-```c bash
-pwd
-```
-
-Debe mostrar:
-
-```
-/home/tu_usuario
-```
-
----
-
-# 2. Verificar si Conda está interfiriendo (causa principal del error)
-
-Incluso si no aparece `(base)` en la terminal, Conda puede seguir cargado en el entorno y **rompe ROS2**.
-
-Ejecuta:
-
-```c bash
-echo $CONDA_DEFAULT_ENV
-```
-
-Si devuelve:
-
-- `base`
-- `conda`
-- cualquier nombre de entorno
-
-→ **ROS2 NO funcionará**.
-
-### ✔ Solución: desactivar Conda completamente
-
-```c bash
-conda deactivate
-```
-
-Si sigue activo, repite:
-
-```c bash
-conda deactivate
-```
-
-Verifica:
-
-```c bash
-echo $CONDA_DEFAULT_ENV
-```
-
-Debe devolver **línea vacía**.
-
----
-
-# 3. Verificar que NO estás en un directorio de Windows
-
-Ejecuta:
-
-```c bash
-pwd
-```
-
-Si aparece algo como:
-
-```
-/mnt/c/Users/...
-```
-
-→ **ROS2 falla siempre**.
-
-### ✔ Muévete a tu home real de Linux:
-
-```c bash
-cd ~
-```
-
-Verifica:
-
-```c bash
-pwd
-```
-
-Debe ser:
-
-```
-/home/tu_usuario
-```
-
----
-
-# 4. Eliminar instalaciones previas de ROS 2 (si existían)
-
-```c bash
-sudo apt purge -y ros-humble-*
-sudo apt autoremove -y
-sudo rm -rf /opt/ros/humble
-sudo rm -rf ~/.ros
-sudo rm -rf ~/.colcon
-```
-
----
-
-# 5. Agregar el repositorio oficial de ROS 2 Humble
-
-```c bash
-sudo apt update
-sudo apt install -y curl gnupg2 lsb-release software-properties-common
-
-sudo mkdir -p /etc/apt/keyrings
-
-curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
-  | sudo gpg --dearmor -o /etc/apt/keyrings/ros-archive-keyring.gpg
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-archive-keyring.gpg] \
-  http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
-  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-```
-
-Actualizar:
-
-```c bash
-sudo apt update
-```
-
-Si aparece:
-
-```
-Get:6 http://packages.ros.org/ros2/ubuntu jammy InRelease
-```
-
-→ El repositorio está bien agregado.
-
----
-
-# 6. Instalar ROS 2 Humble Desktop
-
-```c bash
-sudo apt install -y ros-humble-desktop python3-rosdep
-```
-
-Inicializar rosdep:
-
-```c bash
-sudo rosdep init || true
-rosdep update
-```
-
----
-
-# 7. Activar ROS 2 automáticamente
-
-```c bash
-echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-source ~/.bashrc
-```
-
----
-
-# 8. Reiniciar el daemon de ROS2 (si está colgado)
-
-Este es un error muy común en WSL2.
-
-Ejecuta:
-
-```c bash
-ros2 daemon stop
-ros2 daemon start
-```
-
-Verifica:
-
-```c bash
-ros2 daemon status
-```
-
-Debe decir:
-
-```
-running
-```
-
----
-
-# 9. Probar ROS2 nuevamente
-
-```c bash
-ros2 topic list
-```
-
-Si no hay nodos activos, la salida será vacía (normal).  
-Pero **no debe aparecer traceback**.
-
----
-
-# 10. Si el error persiste: ROS2 está dañado
-
-Verifica si ROS2 está instalado:
-
-```c bash
-ls /opt/ros/humble
-```
-
-Si aparece:
-
-```
-ls: cannot access '/opt/ros/humble': No such file or directory
-```
-
-→ **ROS2 no está instalado correctamente**.
-
-### Solución definitiva
-
-```c bash
-sudo apt purge ros-humble-* -y
-sudo apt autoremove -y
-sudo apt update
-sudo apt install ros-humble-desktop -y
-```
-
-Activar:
+Abra la terminal de Ubuntu en WSL2 y ejecute:
 
 ```bash
-echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-source ~/.bashrc
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3-pip python3-venv -y
 ```
+
+Esto actualiza los paquetes del sistema e instala las herramientas necesarias para crear entornos virtuales y gestionar dependencias.
 
 ---
 
-# 11. Reparar DNS en WSL2 (si pip o rosdep fallan)
+## Paso 2: Creación y activación del entorno virtual
 
-Crear resolv.conf:
+Cree un entorno virtual aislado para evitar conflictos entre librerías:
 
 ```bash
-sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
-sudo bash -c 'echo "nameserver 1.1.1.1" >> /etc/resolv.conf'
+python3 -m venv yolo_env
+source yolo_env/bin/activate
 ```
 
-Evitar que WSL lo reemplace:
+Al activarse, la terminal mostrará el prefijo `(yolo_env)` indicando que está dentro del entorno virtual.
+
+---
+
+## Paso 3: Instalación de PyTorch y Ultralytics YOLOv8
+
+Instale PyTorch compatible con CUDA (WSL2 + GPU NVIDIA) y luego YOLOv8:
 
 ```bash
-sudo bash -c 'echo "[network]" > /etc/wsl.conf'
-sudo bash -c 'echo "generateResolvConf = false" >> /etc/wsl.conf'
+pip install torch torchvision --index-url https://pytorch.org
+pip install ultralytics
 ```
 
-Reiniciar WSL2 desde Windows PowerShell:
+### Validación de la instalación y detección de GPU
 
-```powershell
-wsl --shutdown
+Ejecute:
+
+```bash
+python3 -c "import torch; import ultralytics; ultralytics.checks()"
+```
+
+Este comando verifica versiones y confirma si CUDA y la GPU están disponibles.
+
+---
+
+## Paso 4: Prueba de inferencia con imagen de ejemplo
+
+YOLOv8 permite realizar inferencias desde la línea de comandos o mediante scripts en Python.
+
+### Opción A: Inferencia desde la terminal (CLI)
+
+```bash
+yolo predict model=yolov8n.pt source=https://ultralytics.com save=True
+```
+
+El modelo `yolov8n.pt` se descargará automáticamente si no está presente.
+
+### Opción B: Inferencia mediante script en Python
+
+1. Crear archivo:
+
+```bash
+nano prueba_imagen.py
+```
+
+2. Insertar el siguiente contenido:
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("yolov8n.pt")
+
+url_imagen = "https://ultralytics.com"
+results = model.predict(source=url_imagen, save=True)
+
+print("Inferencia completada con éxito.")
+```
+
+3. Guardar con `Ctrl + O`, confirmar con `Enter`, salir con `Ctrl + X`.
+
+4. Ejecutar el script:
+
+```bash
+python3 prueba_imagen.py
 ```
 
 ---
 
-# 12. Validar la instalación de ROS 2
+## Paso 5: Visualización de resultados
 
-Asegúrate de estar en tu HOME:
-
-```c bash
-cd ~
-```
-
-Ejecuta:
-
-```c bash
-ros2 topic list
-```
-
-La salida correcta debe ser:
+YOLOv8 guarda las imágenes procesadas en:
 
 ```
-/parameter_events
-/rosout
+runs/detect/predict/
 ```
 
-Esto confirma que:
+Para abrir esa carpeta directamente en el explorador de Windows:
 
-- ROS2 está instalado correctamente  
-- El daemon funciona  
-- Python no está interferido  
-- No hay conflictos con rutas de Windows  
-- No hay conflictos con Conda  
-
----
-
-# 13. ¿Qué sigue después de tener ROS 2 funcionando?
-
-Una vez que `ros2 topic list` funciona, ya puedes continuar con:
-
-### Crear tu workspace de ROS 2
-```c bash
-mkdir -p ~/ros2_ws/src
-cd ~/ros2_ws
-colcon build
-source install/setup.bash
+```bash
+explorer.exe runs/detect/predict/
 ```
 
-### Instalar paquetes adicionales de ROS 2
-Ejemplo:
-
-```c bash
-sudo apt install ros-humble-cv-bridge ros-humble-vision-opencv
-```
-
-### Crear tus propios nodos en Python o C++
-Ejemplo:
-
-```c bash
-ros2 pkg create --build-type ament_python mi_paquete
-```
-
-### Crear launch files
-```c bash
-ros2 launch mi_paquete mi_launch.py
-```
-
-### Integrar ROS 2 con otras herramientas
-- YOLOv8  
-- MAVSDK  
-- PX4  
-- Gazebo  
-- QGroundControl  
-
----
-
-# 14. Resumen
-
-Este documento cubre:
-
-- Instalación limpia de ROS 2 Humble en WSL2  
-- Solución al problema real: **Conda interfería con ROS2 incluso sin estar visible**  
-- Reparación del daemon  
-- Reparación de DNS  
-- Validación con `ros2 topic list`  
-
-Con esto, tu entorno ROS 2 queda **estable, funcional y listo para integrarse con simulación, visión y control de drones**.
+Esto permite visualizar las imágenes con las detecciones dibujadas.
 
 ---
