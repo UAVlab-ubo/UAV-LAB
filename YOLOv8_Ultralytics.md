@@ -2,8 +2,6 @@
 ---
 
 # Instalación de YOLOv8 en WSL2 (Ubuntu)  
-Guía paso a paso con comandos listos para copiar y pegar
-
 Esta guía describe el procedimiento completo para instalar Python, configurar un entorno virtual, instalar PyTorch y Ultralytics YOLOv8, y ejecutar pruebas de inferencia en imágenes dentro de WSL2.
 
 ---
