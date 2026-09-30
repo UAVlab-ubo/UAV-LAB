@@ -1,0 +1,85 @@
+{
+  "configById": {
+    "3D!1": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 2.0,
+        "phi": 60,
+        "thetaOffset": 45,
+        "targetOffset": [0, 0, 0.5],
+        "target": [0, 0, 0],
+        "targetOrientation": [0, 0, 0, 1],
+        "fovy": 45,
+        "near": 0.01,
+        "far": 50
+      },
+      "followMode": "follow-pose",
+      "followTf": "camera_link",
+      "scene": {
+        "transforms": {
+          "showLabel": false,
+          "axisScale": 0.1,
+          "enable": false
+        }
+      },
+      "transforms": {
+        "frame:camera_depth_optical_frame": {
+          "visible": false
+        },
+        "frame:camera_color_optical_frame": {
+          "visible": false
+        },
+        "frame:camera_link": {
+          "visible": false
+        }
+      },
+      "topics": {
+        "/camera/depth/points": {
+          "visible": true,
+          "colorMode": "colormap",
+          "colorField": "z",
+          "colorMap": "turbo",
+          "pointSize": 5,
+          "pointShape": "square"
+        }
+      },
+      "layers": {
+        "grid": {
+          "layerId": "foxglove.Grid",
+          "size": 5,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#404040",
+          "position": [0, 0, 0],
+          "rotation": [0, 0, 0],
+          "frameId": "camera_link"
+        }
+      }
+    },
+    "Image!color": {
+      "cameraTopic": "/camera/color/image_raw",
+      "topic": "/camera/color/image_raw"
+    },
+    "Image!depth": {
+      "cameraTopic": "/camera/depth/image_raw",
+      "topic": "/camera/depth/image_raw"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "first": "3D!1",
+    "second": {
+      "first": "Image!color",
+      "second": "Image!depth",
+      "direction": "column",
+      "splitPercentage": 50
+    },
+    "direction": "row",
+    "splitPercentage": 65
+  }
+}
